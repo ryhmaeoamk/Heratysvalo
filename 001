@@ -1,0 +1,279 @@
+/*
+ Name:		Heratysvalo_kosketusnaytto.ino
+ Created:	11/11/2016 10:12:11 AM
+ Author:	Joonan Väänänen, Matias Viitasalo, Joni Pokka
+*/
+
+// INCLUDET
+
+// ALKUMÄÄRITYKSET
+/// Määritetään viikonpäivät
+String sun = "Ma              ";
+String mon = "  Ti            ";
+String tue = "    Ke          ";
+String wed = "      To        ";
+String thu = "        Pe      ";
+String fri = "          La    ";
+String sat = "            Su  ";
+/// Valikkojen määritykset
+int menu = 1;
+int select = 1;
+/// Ajan muuttujat
+int timer1_counter;
+int day;
+int hour = 0;
+int minute = 0;
+long second = 0;
+/// Hälytyksen muuttujat
+int alarm_hour = 0;
+int alarm_minute = 0;
+/// Muita muuttujia
+int canpress = 1;
+int update_inverval = 0;
+long cnt = 0;
+long lastCnt = 0;
+
+// TULOSTAMINEN
+/// Päivien tulostaminen
+void printDay(int days) {
+
+	lcd.setCursor(0, 0);
+
+	switch (days)
+	{
+	case 0:
+		lcd.print(sun);
+		break;
+
+	case 1:
+		lcd.print(mon);
+		break;
+
+	case 2:
+		lcd.print(tue);
+		break;
+
+	case 3:
+		lcd.print(wed);
+		break;
+
+	case 4:
+		lcd.print(thu);
+		break;
+
+	case 5:
+		lcd.print(fri);
+		break;
+
+	case 6:
+		lcd.print(sat);
+		break;
+	}
+
+}		///Päivien tulostaminen
+/// Tuntien tulostaminen
+void printHour(int hr) {
+	lcd.setCursor(0, 1);
+
+	if (hr < 10) {
+		lcd.print("0");
+		lcd.print(hr);
+	}
+	else
+		lcd.print(hr);
+
+	lcd.print(":");
+
+}			///Päivien tulostaminen
+/// Minuuttien tulostaminen
+void printMin(int mi) {
+	lcd.setCursor(3, 1);
+
+	if (mi < 10) {
+		lcd.print("0");
+		lcd.print(mi);
+	}
+	else
+		lcd.print(mi);
+
+	lcd.print(":");
+
+}
+/// Sekunttien tulostaminen
+void printSec(int se) {
+	lcd.setCursor(6, 1);
+
+	if (se < 10) {
+		lcd.print("0");
+		lcd.print(se);
+	}
+	else
+		lcd.print(se);
+
+}
+
+// AJAN TOIMINTA
+void countTime() {
+
+	if (minute == 60) {
+		hour = hour + 1;
+		minute = 0;
+	}
+
+	if (hour == 0) {
+	}
+
+}
+
+/// Päivän hakeminen
+int getDay(long sec) {
+	int days;
+	days = sec / 86400;
+
+	return days;
+}
+/// Tunnin hakeminen
+long getHour(long sec) {
+	long mod;
+	long hour;
+	mod = sec % 86400;
+
+	hour = mod / 3600;
+
+	return hour;
+}
+/// Minuuttien hakeminen
+long getMin(long sec) {
+	long mod;
+	long hour;
+	long minu;
+
+	mod = sec % 86400;
+
+	hour = mod % 3600;
+	minu = hour / 60;
+	return minu;
+}
+/// Sekunttien hakeminen
+long getSec(long sec) {
+	return sec % 60;
+}
+
+/// Päivän kasvattaminen
+void day_increment() {
+	long buff;
+	buff = second;
+	if (buff>86400) buff = buff % 86400;
+	noInterrupts();
+	if (second>518399)
+		second = buff;
+	else second = second + 86400;
+	//delay(300);
+	interrupts();
+}
+/// Tuntien kasvattaminen
+void hour_increment() {
+	long buff;
+	buff = second;
+	if (buff>86400) buff = buff % 86400;
+	noInterrupts();
+	if (second>518399)
+		second = buff;
+	else second = second + 3600;
+	//delay(300);
+	interrupts();
+}
+/// Minuuttien kasvattaminen
+void minute_increment() {
+	long buff;
+	buff = second;
+	if (buff>86400) buff = buff % 86400;
+	noInterrupts();
+	if (second>518399)
+		second = buff;
+	else second = second + 60;
+
+	second = second / 60;
+	second = second * 60;
+
+	//delay(300);
+	interrupts();
+}
+
+/// Päivän vähentäminen
+void day_decrement() {
+	if (second >= 86400) {
+		long buff;
+		buff = second;
+		if (buff > 86400) buff = buff % 86400;
+		noInterrupts();
+		if (second > 518399)
+			second = buff;
+		else second = second - 86400;
+		//delay(300);
+		interrupts();
+	}
+}
+/// Tuntien vähentäminen
+void hour_decrement() {
+	if (second >= 3600) {
+		long buff;
+		buff = second;
+		if (buff > 86400) buff = buff % 86400;
+		noInterrupts();
+		if (second > 518399)
+			second = buff;
+		else second = second - 3600;
+		//delay(300);
+		interrupts();
+	}
+}
+/// Minuuttien vähentäminen
+void minute_decrement() {
+	if (second >= 60) {
+		long buff;
+		buff = second;
+		if (buff > 86400) buff = buff % 86400;
+		noInterrupts();
+		if (second > 518399)
+			second = buff;
+		else second = second - 60;
+
+		second = second / 60;
+		second = second * 60;
+
+		//delay(300);
+		interrupts();
+	}
+}
+
+// SETUP
+void setup() {
+	///Ajastimen määritykset
+	noInterrupts();           // disable all interrupts
+	TCCR1A = 0;
+	TCCR1B = 0;
+
+	timer1_counter = 3036;
+	TCNT1 = timer1_counter;   // preload timer
+	TCCR1B |= (1 << CS12);    // 256 prescaler 
+	TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+	interrupts();             // enable all interrupts
+}
+
+// AJASTIN
+/// interrupt service routine 
+ISR(TIMER1_OVF_vect)
+{
+	TCNT1 = timer1_counter;   // preload timer
+	second = second + 1;
+}
+
+// PÄÄLOOPPI
+void loop() {
+
+	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
+	if (second > 604799) { second = 0; }
+	cnt = cnt + 1;
+  
+}
