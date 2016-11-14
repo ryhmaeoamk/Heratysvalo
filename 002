@@ -1,6 +1,7 @@
 /*
  Name:		Heratysvalo_kosketusnaytto.ino
  Created:	11/11/2016 10:12:11 AM
+ Author:	Joonan Väänänen, Matias Viitasalo, Joni Pokka
 */
 
 // INCLUDET
@@ -31,6 +32,8 @@ int canpress = 1;
 int update_inverval = 0;
 long cnt = 0;
 long lastCnt = 0;
+
+/// T E S T I 
 
 // TULOSTAMINEN
 /// Päivien tulostaminen
