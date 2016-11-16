@@ -1,19 +1,23 @@
-/*
- Name:		Heratysvalo_kosketusnaytto.ino
- Created:	11/11/2016 10:12:11 AM
-*/
+	/*
+	Name:		Heratysvalo_kosketusnaytto.ino
+	Created:	11/11/2016 10:12:11 AM
+	*/
 
 // INCLUDET
+#define DisplaySerial Serial // Using Hardware Serial
+#include "Picaso_Serial_4DLib.h"
+#include "Picaso_Const4D.h"
+Picaso_Serial_4DLib Display(&DisplaySerial);
 
 // ALKUMÄÄRITYKSET
 /// Määritetään viikonpäivät
-String sun = "Ma              ";
-String mon = "  Ti            ";
-String tue = "    Ke          ";
-String wed = "      To        ";
-String thu = "        Pe      ";
-String fri = "          La    ";
-String sat = "            Su  ";
+String sun = "    Maanantai   ";
+String mon = "     Tiistai    ";
+String tue = "   Keskiviikko  ";
+String wed = "     Torstai    ";
+String thu = "    Perjantai   ";
+String fri = "    Lauantai    ";
+String sat = "    Sunnuntai   ";
 /// Valikkojen määritykset
 int menu = 1;
 int select = 1;
@@ -31,9 +35,14 @@ int canpress = 1;
 int update_inverval = 0;
 long cnt = 0;
 long lastCnt = 0;
+/// Piirtämiseen liittyviä
+int colourvalue; // HEXANA
+char tempstring[256] = { 0 }; // Temporary String Variable for putstr
+
 
 // TULOSTAMINEN
 /// Päivien tulostaminen
+/*
 void printDay(int days) {
 
 	lcd.setCursor(0, 0);
@@ -70,7 +79,7 @@ void printDay(int days) {
 	}
 
 }		///Päivien tulostaminen
-/// Tuntien tulostaminen
+		/// Tuntien tulostaminen
 void printHour(int hr) {
 	lcd.setCursor(0, 1);
 
@@ -84,7 +93,7 @@ void printHour(int hr) {
 	lcd.print(":");
 
 }			///Päivien tulostaminen
-/// Minuuttien tulostaminen
+			/// Minuuttien tulostaminen
 void printMin(int mi) {
 	lcd.setCursor(3, 1);
 
@@ -110,6 +119,7 @@ void printSec(int se) {
 		lcd.print(se);
 
 }
+*/
 
 // AJAN TOIMINTA
 void countTime() {
@@ -258,6 +268,20 @@ void setup() {
 	TCCR1B |= (1 << CS12);    // 256 prescaler 
 	TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
 	interrupts();             // enable all interrupts
+
+	/// Näytön määritykset
+	pinMode(4, OUTPUT);  // Set D4 on Arduino to Output (4D Arduino Adaptor V2 - Display Reset)
+	digitalWrite(4, 1);  // Reset the Display via D4
+	delay(100);
+	digitalWrite(4, 0);  // unReset the Display via D4  
+	delay(3500); //let the display start up
+
+	DisplaySerial.begin(9600); // Using default 9600 baud rate
+	Display.TimeLimit4D = 5000; // 5 second timeout on all commands  
+	Display.gfx_BGcolour(BLACK); // Make it text on white background
+	Display.txt_BGcolour(BLACK);
+	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
+	Display.gfx_Cls(); // Clear Screen
 }
 
 // AJASTIN
@@ -268,11 +292,42 @@ ISR(TIMER1_OVF_vect)
 	second = second + 1;
 }
 
-// PÄÄLOOPPI
+/// *********************** ///
+//		  PÄÄLOOPPI         //
+/// ********************** ///
 void loop() {
+
+	//Piirtäminen
+	colourvalue = 0xFFE0;
+
+	/// Painikkeiden reunat
+	Display.gfx_Rectangle(1, 1, 62, 24, colourvalue);
+	Display.gfx_Rectangle(65, 1, 126, 24, colourvalue);
+	Display.gfx_Rectangle(129, 1, 190, 24, colourvalue);
+	Display.gfx_Rectangle(193, 1, 254, 24, colourvalue);
+	Display.gfx_Rectangle(257, 1, 318, 24, colourvalue);
+
+	/// Fontin väri
+	Display.txt_FGcolour(colourvalue);
+
+	Display.gfx_MoveTo(16, 7);
+	sprintf(tempstring, "MAIN", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(76, 7);
+	sprintf(tempstring, "ALARM", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(144, 7);
+	sprintf(tempstring, "TIME", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(212, 7);
+	sprintf(tempstring, "LED", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(269, 7);
+	sprintf(tempstring, "AUDIO", colourvalue);
+	Display.putstr(tempstring);
 
 	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
 	if (second > 604799) { second = 0; }
 	cnt = cnt + 1;
-  
+
 }
