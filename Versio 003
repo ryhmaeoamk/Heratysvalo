@@ -31,9 +31,10 @@ char tempstring[256] = { 0 }; // Temporary String Variable for putstr
 bool redraw_menu = true;
 int cX = 162;
 int cY = 160;
-float preSecondsX = 0, preSecondsY = 100;
 const float DegreesToRadians = 0.0174533;
-
+int i;
+int preSeconds, preMinutes, preHours;
+float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
 
 // TULOSTAMINEN &
 // PIIRTOFUNKTIOT
@@ -108,102 +109,127 @@ void draw_Time(int hr, int mi, int se) {
 	Display.putstr(tempstring);
 }
 
+/// Kellon "tickkien" piirtäminen
+void draw_Ticks() {
+
+	for (int i = 0; i <= 60; i++) {
+
+		/// "Tickkien välit"
+		int lengthTick = 10;
+		int medTick = 30;
+		int longTick = 50;
+		int r = 70;
+
+		int len = 2;
+
+		if (i % 5 == 0) { len = 9; }
+		if (i % 15 == 0) { len = 15; }
+
+		double di = (double)i;
+
+		float tick_x1 = (70)* cos((di * 6 )*DegreesToRadians); //calculate the position of the X coordinate
+		float tick_y1 = (70)* sin((di * 6 )*DegreesToRadians); //calculate the position of the Y coordinate
+		float tick_x2 = (70-len) * cos((di * 6 )*DegreesToRadians); //calculate the position of the X coordinate
+		float tick_y2 = (70-len) * sin((di * 6 )*DegreesToRadians); //calculate the position of the Y coordinate
+
+		//double angleFrom12 = di / 60 * 2 * M_PI;
+		//double angleFrom3 = M_PI / 2 - angleFrom12;
+
+		/// X1,Y1 koordinaatit
+		//float tick_x1 = (cX + cos(angleFrom3)*r);
+		//float tick_y1 = (cY + sin(angleFrom3)*r);
+		/// X2,Y2 Koordinaatit
+		//float tick_x2 = (cX + cos(angleFrom3)*(r - len));
+		//float tick_y2 = (cY + sin(angleFrom3)*(r - len));
+
+		Display.gfx_Line(cX+(int)tick_x1, cY+ (int)tick_y1, (int)tick_x2+cX, (int)tick_y2+cY, colourvalue);
+	}
+}
+
 ///Analogisen kellon pohjan piirtäminen
-/// FOR LOOPPI KELLON "TICKEILLE"
 void draw_AnalogBack() {
 
+	colourvalue = 0xFFE0;
 	Display.gfx_Circle(162, 160, 70, colourvalue);
 	Display.gfx_Circle(162, 160, 71, colourvalue);
 	Display.gfx_Circle(162, 160, 72, colourvalue);
-
-	/// "Tickkien välit"
-	int lengthTick = 10;
-	int medTick = 30;
-	int longTick = 50;
-	int r = 70;
-
-	int i = getSec(second - 1);
-
-	int len = 5;
-
-	if (i % 5 == 0) { len = 10; }
-	if (i % 15 == 0) { len = 15; }
-
-	double di = (double)i;
-
-	double angleFrom12 = di / 60 * 2 * M_PI;
-	double angleFrom3 = M_PI / 2 - angleFrom12;
-
-	/// X1,Y1 koordinaatit
-	float tick_x1 = (cX + cos(angleFrom3)*r);
-	float tick_y1 = (cY + sin(angleFrom3)*r);
-	/// X2,Y2 Koordinaatit
-	float tick_x2 = (cX + cos(angleFrom3)*(r - len));
-	float tick_y2 = (cY + sin(angleFrom3)*(r - len));
-
-	Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
+	draw_Ticks();
 }
 
+/// Sekunttiviisarin piirtäminen
 void drawSecondsHand(int seconds)
 {
+
+	int len = 2;
+	seconds = seconds - 15;
+	if (seconds % 5 == 0) { len = 9; }
+	if (seconds % 15 == 0) { len = 15; }
+
 	float SecondsX, SecondsY;
-	int previousSecond = seconds - 1;
 
-	if (previousSecond == -1)
-	{
-		previousSecond = 59;
-	}
-
+	// Vanhan viivan päälle mustaa
 	Display.gfx_Line(cX, cY, preSecondsX + cX, preSecondsY + cY, BLACK); //erase the previous second hand
 
-	SecondsX = 70 * cos((seconds * 6 + 270)*DegreesToRadians); //calculate the position of the X coordinate
-	SecondsY = 70 * sin((seconds * 6 + 270)*DegreesToRadians); //calculate the position of the Y coordinate
+	SecondsX = (70 - len) * cos((seconds * 6)*DegreesToRadians); //calculate the position of the X coordinate
+	SecondsY = (70 - len) * sin((seconds * 6)*DegreesToRadians); //calculate the position of the Y coordinate
 	preSecondsX = (int)SecondsX; //save the previous coordinates
 	preSecondsY = (int)SecondsY; //save the previous coordinates
 
-	int real_SecondsX = (int)SecondsX;
-	int real_SecondsY = (int)SecondsY;
+	// Uusi viiva
+	Display.gfx_Line(cX, cY, (int)SecondsX + cX, (int)SecondsY + cY, colourvalue); //draw the new seconds hand
 
-	Display.gfx_Line(cX, cY, real_SecondsX + cX, real_SecondsY + cY, colourvalue); //draw the new seconds hand
 }
 
-/// Analogisen kellon piirtäminen
-//void draw_Analog(int se) {
+/// Minuuttiviisarien piirtäminen
+void drawMinutesHand(int minutes)
+{
+	minutes = minutes - 15;
 
-	/*for (int i = 1; i <= 60; i++) {
-	// default tick length is short
-	int len = lengthTick;
-	if (i % 15 == 0) {
-	// Longest tick on quarters (every 15 ticks)
-	len = longTick;
+	float MinutesX, MinutesY;
+
+	// Vanhan viivan päälle mustaa
+	Display.gfx_Line(cX, cY, preMinutesX + cX, preMinutesY + cY, BLACK); //erase the previous second hand
+	Display.gfx_Line(cX + 1, cY + 1, preMinutesX + cX + 1, preMinutesY + cY + 1, BLACK); //erase the previous second hand
+
+	MinutesX = (50) * cos((minutes * 6)*DegreesToRadians); //calculate the position of the X coordinate
+	MinutesY = (50) * sin((minutes * 6)*DegreesToRadians); //calculate the position of the Y coordinate
+	preMinutesX = (int)MinutesX; //save the previous coordinates
+	preMinutesY = (int)MinutesY; //save the previous coordinates
+
+	// Uusi viiva
+	Display.gfx_Line(cX, cY, (int)MinutesX + cX, (int)MinutesY + cY, colourvalue); //draw the new seconds hand
+	Display.gfx_Line(cX+1, cY+1, (int)MinutesX + cX+1, (int)MinutesY + cY+1, colourvalue); //draw the new seconds hand
+
+}
+
+/// Tuntiviisarien piirtäminen
+void drawHoursHand(float hours) 
+{
+	if (hours > 12) {
+		hours-=12;
 	}
-	else if (i % 5 == 0) {
-	// Medium ticks on the '5's (every 5 ticks)
-	len = medTick;
-	}*/
-	/// Tuntiviisari
-	/*
-	int len = 60;
-	double di = (double)se;
-	double secondAngle = se / 60 * 2 * M_PI;
-	int cX = 162;
-	int cY = 160;
 
-	/// X1,Y1 koordinaatit
-	float tick_x1 = cX;
-	float tick_y1 = cY;
-	/// X2,Y2 Koordinaatit
-	float tick_x2 = (cX + cos(secondAngle)*(r - len));
-	float tick_y2 = (cY + sin(secondAngle)*(r - len));
+	//float tempmin = getMin(second)/12;
+	hours = ((hours / 12) * 60) + (float)getMin(second) / 12;
 
-	Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
-	*/
+	hours = hours - 15;
 
+	float HoursX, HoursY;
 
-	/// Minuuttiviisari
+	// Vanhan viivan päälle mustaa
+	Display.gfx_Line(cX, cY, preHoursX + cX, preHoursY + cY, BLACK); //erase the previous second hand
+	Display.gfx_Line(cX + 1, cY + 1, preHoursX + cX + 1, preHoursY + cY + 1, BLACK); //erase the previous second hand
 
-	/// Sekunttiviisari
-//}
+	HoursX = (35) * cos((hours * 6)*DegreesToRadians); //calculate the position of the X coordinate
+	HoursY = (35) * sin((hours * 6)*DegreesToRadians); //calculate the position of the Y coordinate
+	preHoursX = (int)HoursX; //save the previous coordinates
+	preHoursY = (int)HoursY; //save the previous coordinates
+
+	// Uusi viiva
+	Display.gfx_Line(cX, cY, (int)HoursX + cX, (int)HoursY + cY, colourvalue); //draw the new seconds hand
+	Display.gfx_Line(cX + 1, cY + 1, (int)HoursX + cX + 1, (int)HoursY + cY + 1, colourvalue); //draw the new seconds hand
+
+}
 
 // AJAN TOIMINTA
 // AJAN MUUTTAMISET YMS
@@ -368,6 +394,10 @@ void setup() {
 	Display.txt_BGcolour(BLACK);
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
+
+	draw_AnalogBack();
+
+	second = 49000;
 }
 
 // AJASTIN
@@ -390,7 +420,9 @@ void loop() {
 	if (draw == true) {
 		draw_Time(getHour(second), getMin(second), getSec(second));
 		draw_Day(getDay(second));
-		drawSecondsHand(second);
+		drawSecondsHand(getSec(second));
+		drawMinutesHand(getMin(second));
+		drawHoursHand(getHour(second));
 		draw = false;
 	}
 
