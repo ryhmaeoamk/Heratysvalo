@@ -2,6 +2,7 @@
 #define DisplaySerial Serial // Using Hardware Serial
 #include "Picaso_Serial_4DLib\Picaso_Const4D.h"
 #include "Picaso_Serial_4DLib\Picaso_Serial_4DLib.h"
+#include <math.h>
 Picaso_Serial_4DLib Display(&DisplaySerial);
 
 // ALKUMÄÄRITYKSET
@@ -23,47 +24,168 @@ int canpress = 1;
 int update_inverval = 0;
 long cnt = 0;
 long lastCnt = 0;
+bool draw = true;
 /// Piirtämiseen liittyviä
 int colourvalue; // HEXANA
 char tempstring[256] = { 0 }; // Temporary String Variable for putstr
+bool redraw_menu = true;
 
 
-// TULOSTAMINEN
-//Päivän tulostus
-void printDay(int days) {
+// TULOSTAMINEN &
+// PIIRTOFUNKTIOT
+
+/// Päivän tulostus
+void draw_Day(int days) {
+	Display.txt_Height(2);
+	Display.txt_Width(2);
 	Display.txt_FGcolour(colourvalue);
-	Display.gfx_MoveTo(138, 35);
+	Display.gfx_MoveTo(31, 27);
 
 	if (days == 0)
-		paiva = "Maanantai";
+		paiva = "    Maanantai   ";
 	if (days == 1)
-		paiva = "Tiistai";
+		paiva = "     Tiistai    ";
 	if (days == 2)
-		paiva = "Keskiviikko";
+		paiva = "   Keskiviikko  ";
 	if (days == 3)
-		paiva = "Torstai";
+		paiva = "     Torstai    ";
 	if (days == 4)
-		paiva = "Perjantai";
+		paiva = "    Perjantai   ";
 	if (days == 5)
-		paiva = "Lauantai";
+		paiva = "    Lauantai    ";
 	if (days == 6)
-		paiva = "Sunnuntai";
+		paiva = "    Sunnuntai   ";
 
 	sprintf(tempstring, paiva, colourvalue);
 	Display.putstr(tempstring);
 }
-	
-//Kellonajan tulostus
-void printTime(int hr, int mi, int se) {
-	Display.txt_FGcolour(colourvalue);
-	Display.gfx_MoveTo(143, 55);
 
-	sprintf(tempstring, "%002d: %002d: %002d", hr, mi, se, colourvalue);
+/// Valikon piirto
+void draw_Menu() {
+	colourvalue = 0xFFE0;
+
+	/// Painikkeiden reunat
+	Display.gfx_Rectangle(1, 1, 62, 24, colourvalue);
+	Display.gfx_Rectangle(65, 1, 126, 24, colourvalue);
+	Display.gfx_Rectangle(129, 1, 190, 24, colourvalue);
+	Display.gfx_Rectangle(193, 1, 254, 24, colourvalue);
+	Display.gfx_Rectangle(257, 1, 318, 24, colourvalue);
+
+	/// Fontin väri
+	Display.txt_FGcolour(colourvalue);
+
+	Display.txt_Width(1);
+	Display.txt_Height(1);
+
+	Display.gfx_MoveTo(16, 7);
+	sprintf(tempstring, "MAIN", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(76, 7);
+	sprintf(tempstring, "ALARM", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(144, 7);
+	sprintf(tempstring, "TIME", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(212, 7);
+	sprintf(tempstring, "LED", colourvalue);
+	Display.putstr(tempstring);
+	Display.gfx_MoveTo(269, 7);
+	sprintf(tempstring, "AUDIO", colourvalue);
+	Display.putstr(tempstring);
+}
+
+/// Kellonajan piirto
+void draw_Time(int hr, int mi, int se) {
+	Display.txt_Height(3);
+	Display.txt_Width(3);
+	Display.txt_FGcolour(colourvalue);
+	Display.gfx_MoveTo(66, 50);
+	sprintf(tempstring, "%002d:%002d:%002d", hr, mi, se, colourvalue);
 
 	Display.putstr(tempstring);
 }
 
+///Analogisen kellon pohjan piirtäminen
+/// FOR LOOPPI KELLON "TICKEILLE"
+void draw_AnalogBack() {
+
+	Display.gfx_Circle(162, 160, 70, colourvalue);
+	Display.gfx_Circle(162, 160, 71, colourvalue);
+	Display.gfx_Circle(162, 160, 72, colourvalue);
+
+	/// "Tickkien välit"
+	int lengthTick = 10;
+	int medTick = 30;
+	int longTick = 50;
+	int r = 70;
+
+	for (int i = 0; i <= 60; i++) {
+
+		int len = 5;
+
+		if (i % 5 == 0) { len = 10; }
+		if (i % 15 == 0) { len = 15; }
+
+		double di = (double)i;
+
+		double angleFrom12 = di / 60*2* M_PI;
+		double angleFrom3 = M_PI / 2 - angleFrom12;
+
+		/// Ympyrän keskipiste
+		int cX = 162;
+		int cY = 160;
+
+		/// X1,Y1 koordinaatit
+		float tick_x1 = (cX + cos(angleFrom3)*r);
+		float tick_y1 = (cY + sin(angleFrom3)*r);
+		/// X2,Y2 Koordinaatit
+		float tick_x2 = (cX + cos(angleFrom3)*(r - len));
+		float tick_y2 = (cY + sin(angleFrom3)*(r - len));
+
+		Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
+	}
+}
+/// Analogisen kellon piirtäminen
+void draw_Analog(int se) {
+
+	/*for (int i = 1; i <= 60; i++) {
+		// default tick length is short
+		int len = lengthTick;
+		if (i % 15 == 0) {
+			// Longest tick on quarters (every 15 ticks)
+			len = longTick;
+		}
+		else if (i % 5 == 0) {
+			// Medium ticks on the '5's (every 5 ticks)
+			len = medTick;
+		}*/
+	/// Tuntiviisari
+		/*
+		int len = 60;
+		double di = (double)se;
+		double secondAngle = se / 60 * 2 * M_PI;
+		int cX = 162;
+		int cY = 160;
+
+		/// X1,Y1 koordinaatit
+		float tick_x1 = cX;
+		float tick_y1 = cY;
+		/// X2,Y2 Koordinaatit
+		float tick_x2 = (cX + cos(secondAngle)*(r - len));
+		float tick_y2 = (cY + sin(secondAngle)*(r - len));
+
+		Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
+		*/
+		
+
+	/// Minuuttiviisari
+
+	/// Sekunttiviisari
+}
+
 // AJAN TOIMINTA
+// AJAN MUUTTAMISET YMS
+
 void countTime() {
 
 	if (minute == 60) {
@@ -198,37 +320,6 @@ void minute_decrement() {
 	}
 }
 
-//Valikon piirto
-void draw_Menu() {
-	colourvalue = 0xFFE0;
-
-	/// Painikkeiden reunat
-	Display.gfx_Rectangle(1, 1, 62, 24, colourvalue);
-	Display.gfx_Rectangle(65, 1, 126, 24, colourvalue);
-	Display.gfx_Rectangle(129, 1, 190, 24, colourvalue);
-	Display.gfx_Rectangle(193, 1, 254, 24, colourvalue);
-	Display.gfx_Rectangle(257, 1, 318, 24, colourvalue);
-
-	/// Fontin väri
-	Display.txt_FGcolour(colourvalue);
-
-	Display.gfx_MoveTo(16, 7);
-	sprintf(tempstring, "MAIN", colourvalue);
-	Display.putstr(tempstring);
-	Display.gfx_MoveTo(76, 7);
-	sprintf(tempstring, "ALARM", colourvalue);
-	Display.putstr(tempstring);
-	Display.gfx_MoveTo(144, 7);
-	sprintf(tempstring, "TIME", colourvalue);
-	Display.putstr(tempstring);
-	Display.gfx_MoveTo(212, 7);
-	sprintf(tempstring, "LED", colourvalue);
-	Display.putstr(tempstring);
-	Display.gfx_MoveTo(269, 7);
-	sprintf(tempstring, "AUDIO", colourvalue);
-	Display.putstr(tempstring);
-}
-
 // SETUP
 void setup() {
 	///Ajastimen määritykset
@@ -255,8 +346,6 @@ void setup() {
 	Display.txt_BGcolour(BLACK);
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
-
-	draw_Menu();
 }
 
 // AJASTIN
@@ -265,6 +354,7 @@ ISR(TIMER1_OVF_vect)
 {
 	TCNT1 = timer1_counter;   // preload timer
 	second = second + 1;
+	draw = true;
 }
 
 /// *********************** ///
@@ -273,11 +363,23 @@ ISR(TIMER1_OVF_vect)
 void loop() {
 
 	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
+
+	// PÄÄ PIIRTOLOOP
+	if (draw == true) {
+		draw_Time(getHour(second), getMin(second), getSec(second));
+		draw_Day(getDay(second));
+		draw = false;
+	}
+
+	if (redraw_menu == true) {
+		draw_Menu();
+		draw_AnalogBack();
+		redraw_menu = false;
+	}
+
 	if (second > 604799) { second = 0; }
 	cnt = cnt + 1;
 
 	//Kutsutaan päivän ja kelloajan tulostusfunktioita
-	printDay(getDay(second));
-	printTime(getHour(second), getMin(second), getSec(second));
 
 }
