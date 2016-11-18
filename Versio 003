@@ -29,6 +29,10 @@ bool draw = true;
 int colourvalue; // HEXANA
 char tempstring[256] = { 0 }; // Temporary String Variable for putstr
 bool redraw_menu = true;
+int cX = 162;
+int cY = 160;
+float preSecondsX = 0, preSecondsY = 100;
+const float DegreesToRadians = 0.0174533;
 
 
 // TULOSTAMINEN &
@@ -101,7 +105,6 @@ void draw_Time(int hr, int mi, int se) {
 	Display.txt_FGcolour(colourvalue);
 	Display.gfx_MoveTo(66, 50);
 	sprintf(tempstring, "%002d:%002d:%002d", hr, mi, se, colourvalue);
-
 	Display.putstr(tempstring);
 }
 
@@ -119,69 +122,88 @@ void draw_AnalogBack() {
 	int longTick = 50;
 	int r = 70;
 
-	for (int i = 0; i <= 60; i++) {
+	int i = getSec(second - 1);
 
-		int len = 5;
+	int len = 5;
 
-		if (i % 5 == 0) { len = 10; }
-		if (i % 15 == 0) { len = 15; }
+	if (i % 5 == 0) { len = 10; }
+	if (i % 15 == 0) { len = 15; }
 
-		double di = (double)i;
+	double di = (double)i;
 
-		double angleFrom12 = di / 60*2* M_PI;
-		double angleFrom3 = M_PI / 2 - angleFrom12;
+	double angleFrom12 = di / 60 * 2 * M_PI;
+	double angleFrom3 = M_PI / 2 - angleFrom12;
 
-		/// Ympyrän keskipiste
-		int cX = 162;
-		int cY = 160;
+	/// X1,Y1 koordinaatit
+	float tick_x1 = (cX + cos(angleFrom3)*r);
+	float tick_y1 = (cY + sin(angleFrom3)*r);
+	/// X2,Y2 Koordinaatit
+	float tick_x2 = (cX + cos(angleFrom3)*(r - len));
+	float tick_y2 = (cY + sin(angleFrom3)*(r - len));
 
-		/// X1,Y1 koordinaatit
-		float tick_x1 = (cX + cos(angleFrom3)*r);
-		float tick_y1 = (cY + sin(angleFrom3)*r);
-		/// X2,Y2 Koordinaatit
-		float tick_x2 = (cX + cos(angleFrom3)*(r - len));
-		float tick_y2 = (cY + sin(angleFrom3)*(r - len));
-
-		Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
-	}
+	Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
 }
+
+void drawSecondsHand(int seconds)
+{
+	float SecondsX, SecondsY;
+	int previousSecond = seconds - 1;
+
+	if (previousSecond == -1)
+	{
+		previousSecond = 59;
+	}
+
+	Display.gfx_Line(cX, cY, preSecondsX + cX, preSecondsY + cY, BLACK); //erase the previous second hand
+
+	SecondsX = 70 * cos((seconds * 6 + 270)*DegreesToRadians); //calculate the position of the X coordinate
+	SecondsY = 70 * sin((seconds * 6 + 270)*DegreesToRadians); //calculate the position of the Y coordinate
+	preSecondsX = (int)SecondsX; //save the previous coordinates
+	preSecondsY = (int)SecondsY; //save the previous coordinates
+
+	int real_SecondsX = (int)SecondsX;
+	int real_SecondsY = (int)SecondsY;
+
+	Display.gfx_Line(cX, cY, real_SecondsX + cX, real_SecondsY + cY, colourvalue); //draw the new seconds hand
+}
+
 /// Analogisen kellon piirtäminen
-void draw_Analog(int se) {
+//void draw_Analog(int se) {
 
 	/*for (int i = 1; i <= 60; i++) {
-		// default tick length is short
-		int len = lengthTick;
-		if (i % 15 == 0) {
-			// Longest tick on quarters (every 15 ticks)
-			len = longTick;
-		}
-		else if (i % 5 == 0) {
-			// Medium ticks on the '5's (every 5 ticks)
-			len = medTick;
-		}*/
+	// default tick length is short
+	int len = lengthTick;
+	if (i % 15 == 0) {
+	// Longest tick on quarters (every 15 ticks)
+	len = longTick;
+	}
+	else if (i % 5 == 0) {
+	// Medium ticks on the '5's (every 5 ticks)
+	len = medTick;
+	}*/
 	/// Tuntiviisari
-		/*
-		int len = 60;
-		double di = (double)se;
-		double secondAngle = se / 60 * 2 * M_PI;
-		int cX = 162;
-		int cY = 160;
+	/*
+	int len = 60;
+	double di = (double)se;
+	double secondAngle = se / 60 * 2 * M_PI;
+	int cX = 162;
+	int cY = 160;
 
-		/// X1,Y1 koordinaatit
-		float tick_x1 = cX;
-		float tick_y1 = cY;
-		/// X2,Y2 Koordinaatit
-		float tick_x2 = (cX + cos(secondAngle)*(r - len));
-		float tick_y2 = (cY + sin(secondAngle)*(r - len));
+	/// X1,Y1 koordinaatit
+	float tick_x1 = cX;
+	float tick_y1 = cY;
+	/// X2,Y2 Koordinaatit
+	float tick_x2 = (cX + cos(secondAngle)*(r - len));
+	float tick_y2 = (cY + sin(secondAngle)*(r - len));
 
-		Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
-		*/
-		
+	Display.gfx_Line(tick_x1, tick_y1, tick_x2, tick_y2, colourvalue);
+	*/
+
 
 	/// Minuuttiviisari
 
 	/// Sekunttiviisari
-}
+//}
 
 // AJAN TOIMINTA
 // AJAN MUUTTAMISET YMS
@@ -368,6 +390,7 @@ void loop() {
 	if (draw == true) {
 		draw_Time(getHour(second), getMin(second), getSec(second));
 		draw_Day(getDay(second));
+		drawSecondsHand(second);
 		draw = false;
 	}
 
