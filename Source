@@ -127,22 +127,22 @@ void draw_Ticks() {
 
 		double di = (double)i;
 
-		float tick_x1 = (70)* cos((di * 6 )*DegreesToRadians); //calculate the position of the X coordinate
-		float tick_y1 = (70)* sin((di * 6 )*DegreesToRadians); //calculate the position of the Y coordinate
-		float tick_x2 = (70-len) * cos((di * 6 )*DegreesToRadians); //calculate the position of the X coordinate
-		float tick_y2 = (70-len) * sin((di * 6 )*DegreesToRadians); //calculate the position of the Y coordinate
+		float tick_x1 = (70)* cos((di * 6)*DegreesToRadians); //calculate the position of the X coordinate
+		float tick_y1 = (70)* sin((di * 6)*DegreesToRadians); //calculate the position of the Y coordinate
+		float tick_x2 = (70 - len) * cos((di * 6)*DegreesToRadians); //calculate the position of the X coordinate
+		float tick_y2 = (70 - len) * sin((di * 6)*DegreesToRadians); //calculate the position of the Y coordinate
 
-		//double angleFrom12 = di / 60 * 2 * M_PI;
-		//double angleFrom3 = M_PI / 2 - angleFrom12;
+																	 //double angleFrom12 = di / 60 * 2 * M_PI;
+																	 //double angleFrom3 = M_PI / 2 - angleFrom12;
 
-		/// X1,Y1 koordinaatit
-		//float tick_x1 = (cX + cos(angleFrom3)*r);
-		//float tick_y1 = (cY + sin(angleFrom3)*r);
-		/// X2,Y2 Koordinaatit
-		//float tick_x2 = (cX + cos(angleFrom3)*(r - len));
-		//float tick_y2 = (cY + sin(angleFrom3)*(r - len));
+																	 /// X1,Y1 koordinaatit
+																	 //float tick_x1 = (cX + cos(angleFrom3)*r);
+																	 //float tick_y1 = (cY + sin(angleFrom3)*r);
+																	 /// X2,Y2 Koordinaatit
+																	 //float tick_x2 = (cX + cos(angleFrom3)*(r - len));
+																	 //float tick_y2 = (cY + sin(angleFrom3)*(r - len));
 
-		Display.gfx_Line(cX+(int)tick_x1, cY+ (int)tick_y1, (int)tick_x2+cX, (int)tick_y2+cY, colourvalue);
+		Display.gfx_Line(cX + (int)tick_x1, cY + (int)tick_y1, (int)tick_x2 + cX, (int)tick_y2 + cY, colourvalue);
 	}
 }
 
@@ -175,7 +175,7 @@ void drawSecondsHand(int seconds)
 	preSecondsX = (int)SecondsX; //save the previous coordinates
 	preSecondsY = (int)SecondsY; //save the previous coordinates
 
-	// Uusi viiva
+								 // Uusi viiva
 	Display.gfx_Line(cX, cY, (int)SecondsX + cX, (int)SecondsY + cY, colourvalue); //draw the new seconds hand
 
 }
@@ -187,26 +187,29 @@ void drawMinutesHand(int minutes)
 
 	float MinutesX, MinutesY;
 
-	// Vanhan viivan päälle mustaa
-	Display.gfx_Line(cX, cY, preMinutesX + cX, preMinutesY + cY, BLACK); //erase the previous second hand
-	Display.gfx_Line(cX + 1, cY + 1, preMinutesX + cX + 1, preMinutesY + cY + 1, BLACK); //erase the previous second hand
 
 	MinutesX = (50) * cos((minutes * 6)*DegreesToRadians); //calculate the position of the X coordinate
 	MinutesY = (50) * sin((minutes * 6)*DegreesToRadians); //calculate the position of the Y coordinate
+
+														   // Vanhan viivan päälle mustaa
+	if ((int)MinutesX != preMinutesX || (int)MinutesY != preMinutesY) {
+		Display.gfx_Line(cX, cY, preMinutesX + cX, preMinutesY + cY, BLACK); //erase the previous second hand
+		Display.gfx_Line(cX + 1, cY + 1, preMinutesX + cX + 1, preMinutesY + cY + 1, BLACK); //erase the previous second hand
+	}
+
 	preMinutesX = (int)MinutesX; //save the previous coordinates
 	preMinutesY = (int)MinutesY; //save the previous coordinates
 
-	// Uusi viiva
 	Display.gfx_Line(cX, cY, (int)MinutesX + cX, (int)MinutesY + cY, colourvalue); //draw the new seconds hand
-	Display.gfx_Line(cX+1, cY+1, (int)MinutesX + cX+1, (int)MinutesY + cY+1, colourvalue); //draw the new seconds hand
+	Display.gfx_Line(cX + 1, cY + 1, (int)MinutesX + cX + 1, (int)MinutesY + cY + 1, colourvalue); //draw the new seconds hand
 
 }
 
 /// Tuntiviisarien piirtäminen
-void drawHoursHand(float hours) 
+void drawHoursHand(float hours)
 {
 	if (hours > 12) {
-		hours-=12;
+		hours -= 12;
 	}
 
 	//float tempmin = getMin(second)/12;
@@ -216,16 +219,18 @@ void drawHoursHand(float hours)
 
 	float HoursX, HoursY;
 
-	// Vanhan viivan päälle mustaa
-	Display.gfx_Line(cX, cY, preHoursX + cX, preHoursY + cY, BLACK); //erase the previous second hand
-	Display.gfx_Line(cX + 1, cY + 1, preHoursX + cX + 1, preHoursY + cY + 1, BLACK); //erase the previous second hand
-
 	HoursX = (35) * cos((hours * 6)*DegreesToRadians); //calculate the position of the X coordinate
 	HoursY = (35) * sin((hours * 6)*DegreesToRadians); //calculate the position of the Y coordinate
+
+													   // Vanhan viivan päälle mustaa
+	if ((int)HoursX != preHoursX || (int)HoursY != preHoursY) {
+		Display.gfx_Line(cX, cY, preHoursX + cX, preHoursY + cY, BLACK); //erase the previous second hand
+		Display.gfx_Line(cX + 1, cY + 1, preHoursX + cX + 1, preHoursY + cY + 1, BLACK); //erase the previous second hand
+	}
+
 	preHoursX = (int)HoursX; //save the previous coordinates
 	preHoursY = (int)HoursY; //save the previous coordinates
 
-	// Uusi viiva
 	Display.gfx_Line(cX, cY, (int)HoursX + cX, (int)HoursY + cY, colourvalue); //draw the new seconds hand
 	Display.gfx_Line(cX + 1, cY + 1, (int)HoursX + cX + 1, (int)HoursY + cY + 1, colourvalue); //draw the new seconds hand
 
