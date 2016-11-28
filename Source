@@ -12,10 +12,10 @@ int menu = 1;
 int select = 1;
 /// Ajan muuttujat
 int timer1_counter;
-int day;
-int hour = 0;
-int minute = 0;
-long second = 0;
+unsigned int day = 6;
+unsigned int hour = 23;
+unsigned int minute = 59;
+unsigned int second = 0;
 /// Hälytyksen muuttujat
 int alarm_hour = 0;
 int alarm_minute = 0;
@@ -132,16 +132,6 @@ void draw_Ticks() {
 		float tick_x2 = (70 - len) * cos((di * 6)*DegreesToRadians); //calculate the position of the X coordinate
 		float tick_y2 = (70 - len) * sin((di * 6)*DegreesToRadians); //calculate the position of the Y coordinate
 
-																	 //double angleFrom12 = di / 60 * 2 * M_PI;
-																	 //double angleFrom3 = M_PI / 2 - angleFrom12;
-
-																	 /// X1,Y1 koordinaatit
-																	 //float tick_x1 = (cX + cos(angleFrom3)*r);
-																	 //float tick_y1 = (cY + sin(angleFrom3)*r);
-																	 /// X2,Y2 Koordinaatit
-																	 //float tick_x2 = (cX + cos(angleFrom3)*(r - len));
-																	 //float tick_y2 = (cY + sin(angleFrom3)*(r - len));
-
 		Display.gfx_Line(cX + (int)tick_x1, cY + (int)tick_y1, (int)tick_x2 + cX, (int)tick_y2 + cY, colourvalue);
 	}
 }
@@ -212,8 +202,8 @@ void drawHoursHand(float hours)
 		hours -= 12;
 	}
 
-	//float tempmin = getMin(second)/12;
-	hours = ((hours / 12) * 60) + (float)getMin(second) / 12;
+	//float tempmin = minute/12;
+	hours = ((hours / 12) * 60) + (float)minute / 12;
 
 	hours = hours - 15;
 
@@ -234,143 +224,6 @@ void drawHoursHand(float hours)
 	Display.gfx_Line(cX, cY, (int)HoursX + cX, (int)HoursY + cY, colourvalue); //draw the new seconds hand
 	Display.gfx_Line(cX + 1, cY + 1, (int)HoursX + cX + 1, (int)HoursY + cY + 1, colourvalue); //draw the new seconds hand
 
-}
-
-// AJAN TOIMINTA
-// AJAN MUUTTAMISET YMS
-
-void countTime() {
-
-	if (minute == 60) {
-		hour = hour + 1;
-		minute = 0;
-	}
-
-	if (hour == 0) {
-	}
-
-}
-
-/// Päivän hakeminen
-int getDay(long sec) {
-	int days;
-	days = sec / 86400;
-
-	return days;
-}
-/// Tunnin hakeminen
-long getHour(long sec) {
-	long mod;
-	long hour;
-	mod = sec % 86400;
-
-	hour = mod / 3600;
-
-	return hour;
-}
-/// Minuuttien hakeminen
-long getMin(long sec) {
-	long mod;
-	long hour;
-	long minu;
-
-	mod = sec % 86400;
-
-	hour = mod % 3600;
-	minu = hour / 60;
-	return minu;
-}
-/// Sekunttien hakeminen
-long getSec(long sec) {
-	return sec % 60;
-}
-
-/// Päivän kasvattaminen
-void day_increment() {
-	long buff;
-	buff = second;
-	if (buff>86400) buff = buff % 86400;
-	noInterrupts();
-	if (second>518399)
-		second = buff;
-	else second = second + 86400;
-	//delay(300);
-	interrupts();
-}
-/// Tuntien kasvattaminen
-void hour_increment() {
-	long buff;
-	buff = second;
-	if (buff>86400) buff = buff % 86400;
-	noInterrupts();
-	if (second>518399)
-		second = buff;
-	else second = second + 3600;
-	//delay(300);
-	interrupts();
-}
-/// Minuuttien kasvattaminen
-void minute_increment() {
-	long buff;
-	buff = second;
-	if (buff>86400) buff = buff % 86400;
-	noInterrupts();
-	if (second>518399)
-		second = buff;
-	else second = second + 60;
-
-	second = second / 60;
-	second = second * 60;
-
-	//delay(300);
-	interrupts();
-}
-
-/// Päivän vähentäminen
-void day_decrement() {
-	if (second >= 86400) {
-		long buff;
-		buff = second;
-		if (buff > 86400) buff = buff % 86400;
-		noInterrupts();
-		if (second > 518399)
-			second = buff;
-		else second = second - 86400;
-		//delay(300);
-		interrupts();
-	}
-}
-/// Tuntien vähentäminen
-void hour_decrement() {
-	if (second >= 3600) {
-		long buff;
-		buff = second;
-		if (buff > 86400) buff = buff % 86400;
-		noInterrupts();
-		if (second > 518399)
-			second = buff;
-		else second = second - 3600;
-		//delay(300);
-		interrupts();
-	}
-}
-/// Minuuttien vähentäminen
-void minute_decrement() {
-	if (second >= 60) {
-		long buff;
-		buff = second;
-		if (buff > 86400) buff = buff % 86400;
-		noInterrupts();
-		if (second > 518399)
-			second = buff;
-		else second = second - 60;
-
-		second = second / 60;
-		second = second * 60;
-
-		//delay(300);
-		interrupts();
-	}
 }
 
 // SETUP
@@ -401,8 +254,6 @@ void setup() {
 	Display.gfx_Cls(); // Clear Screen
 
 	draw_AnalogBack();
-
-	second = 49000;
 }
 
 // AJASTIN
@@ -410,7 +261,37 @@ void setup() {
 ISR(TIMER1_OVF_vect)
 {
 	TCNT1 = timer1_counter;   // preload timer
-	second = second + 1;
+
+	second++;
+
+	//Sekunnit
+	if (second == 60) {
+		second = 0;
+		minute++;
+
+	}
+	//Minuutit
+	if (minute == 60) {
+		minute = 0;
+		hour++;
+
+	}
+	//Tunnit
+	if (hour == 24) {
+		hour = 0;
+		minute = 0;
+		second = 0;
+		day++;
+
+	}
+	//Päivät
+	if (day == 7) {
+		day = 0;
+	}
+
+	
+
+	// Draw trueksi
 	draw = true;
 }
 
@@ -423,21 +304,23 @@ void loop() {
 
 	// PÄÄ PIIRTOLOOP
 	if (draw == true) {
-		draw_Time(getHour(second), getMin(second), getSec(second));
-		draw_Day(getDay(second));
-		drawSecondsHand(getSec(second));
-		drawMinutesHand(getMin(second));
-		drawHoursHand(getHour(second));
+		draw_Time(hour, minute, second);
+		draw_Day(day);
+		drawSecondsHand(second);
+		drawMinutesHand(minute);
+		drawHoursHand(hour);
 		draw = false;
 	}
 
 	if (redraw_menu == true) {
+		//switch(valikko) {
+		//case 1: //Alkuvalikko
 		draw_Menu();
 		draw_AnalogBack();
 		redraw_menu = false;
+		//case 2: 
 	}
 
-	if (second > 604799) { second = 0; }
 	cnt = cnt + 1;
 
 	//Kutsutaan päivän ja kelloajan tulostusfunktioita
