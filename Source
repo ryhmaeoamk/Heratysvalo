@@ -35,6 +35,27 @@ const float DegreesToRadians = 0.0174533;
 int i;
 int preSeconds, preMinutes, preHours;
 float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
+int menu_id = 1, currentMenu = 1;
+
+/*
+int mainButton_x1 = 1, mainButton_x2 = 62;
+int alarmButton_x1 = 65, alarmButton_x2 = 126;
+int timeButton_x1 = 129, timeButton_x2 = 190;
+int ledButton_x1 = 193, ledButton_x2 = 254;
+int audioButton_x1 = 257, audioButton_x2 = 318;
+*/
+
+int button_y1 = 1, button_y2 = 24;
+
+int buttonCoord[6][2] = {
+	{ 1, 62 } ,
+	{ 65, 126 } ,
+	{ 129, 190 } ,
+	{ 193, 254 } ,
+	{ 257, 318 }
+};
+
+int touch_X, touch_Y;
 
 // TULOSTAMINEN &
 // PIIRTOFUNKTIOT
@@ -70,11 +91,10 @@ void draw_Menu() {
 	colourvalue = 0xFFE0;
 
 	/// Painikkeiden reunat
-	Display.gfx_Rectangle(1, 1, 62, 24, colourvalue);
-	Display.gfx_Rectangle(65, 1, 126, 24, colourvalue);
-	Display.gfx_Rectangle(129, 1, 190, 24, colourvalue);
-	Display.gfx_Rectangle(193, 1, 254, 24, colourvalue);
-	Display.gfx_Rectangle(257, 1, 318, 24, colourvalue);
+	for (int i = 0; i < 5; i++)
+	{
+		Display.gfx_Rectangle(buttonCoord[i][0], button_y1, buttonCoord[i][1], button_y2, colourvalue);
+	}
 
 	/// Fontin väri
 	Display.txt_FGcolour(colourvalue);
@@ -195,6 +215,20 @@ void drawMinutesHand(int minutes)
 
 }
 
+void getTouch() {
+	touch_X = Display.touch_Get(TOUCH_GETX);
+	touch_Y = Display.touch_Get(TOUCH_GETY);
+
+	for (int menuCounter = 0; menuCounter < 5; menuCounter++)
+	{
+		if (touch_X >= buttonCoord[menuCounter][0] && touch_X <= buttonCoord[menuCounter][1]
+			&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16) {
+			menu_id = menuCounter + 1;
+			redraw_menu == true;
+		}
+	}
+}
+
 /// Tuntiviisarien piirtäminen
 void drawHoursHand(float hours)
 {
@@ -244,6 +278,7 @@ void setup() {
 	digitalWrite(4, 1);  // Reset the Display via D4
 	delay(100);
 	digitalWrite(4, 0);  // unReset the Display via D4  
+
 	delay(3500); //let the display start up
 
 	DisplaySerial.begin(9600); // Using default 9600 baud rate
@@ -253,6 +288,10 @@ void setup() {
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
 
+	Display.touch_Set(TOUCH_ENABLE);
+	Display.touch_Set(TOUCH_REGIONDEFAULT);
+
+	draw_Menu();
 	draw_AnalogBack();
 }
 
@@ -289,7 +328,7 @@ ISR(TIMER1_OVF_vect)
 		day = 0;
 	}
 
-	
+
 
 	// Draw trueksi
 	draw = true;
@@ -303,7 +342,7 @@ void loop() {
 	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
 
 	// PÄÄ PIIRTOLOOP
-	if (draw == true) {
+	if (draw == true && currentMenu == 1) {
 		draw_Time(hour, minute, second);
 		draw_Day(day);
 		drawSecondsHand(second);
@@ -312,13 +351,34 @@ void loop() {
 		draw = false;
 	}
 
-	if (redraw_menu == true) {
-		//switch(valikko) {
-		//case 1: //Alkuvalikko
+	if (redraw_menu == true && menu_id != currentMenu) {
+		Display.gfx_Cls();
 		draw_Menu();
-		draw_AnalogBack();
+		currentMenu = menu_id;
+		switch (menu_id) {
+		case 1:
+			draw_AnalogBack();
+			break;
+		case 2:
+			draw_AnalogBack();
+			break;
+		case 3:
+			draw_AnalogBack();
+			break;
+		case 4:
+			
+			break;
+		case 5:
+			
+			break;
+		default:
+			break;
+		}
 		redraw_menu = false;
-		//case 2: 
+	}
+
+	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
+		getTouch();
 	}
 
 	cnt = cnt + 1;
