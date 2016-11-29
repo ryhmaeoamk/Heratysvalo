@@ -19,8 +19,9 @@ unsigned int second = 0;
 /// Hälytyksen muuttujat
 int alarm_hour = 0;
 int alarm_minute = 0;
+bool alarm = false;
 /// Muita muuttujia
-int canpress = 1;
+int canpress = 2;
 int update_inverval = 0;
 long cnt = 0;
 long lastCnt = 0;
@@ -227,6 +228,12 @@ void getTouch() {
 			redraw_menu = true;
 		}
 	}
+	if (menu_id == 2 && cnt == 25) {
+		if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
+			alarm = !alarm;
+			cnt = 0;
+		}
+	}
 }
 
 /// Tuntiviisarien piirtäminen
@@ -332,6 +339,8 @@ ISR(TIMER1_OVF_vect)
 
 	// Draw trueksi
 	draw = true;
+	canpress++;
+	if (canpress > 2) { canpress = 2; }
 }
 
 /// *********************** ///
@@ -349,19 +358,6 @@ void loop() {
 	Display.putstr(tempstring);
 	*/
 
-	// PÄÄ PIIRTOLOOP
-	if (draw == true && currentMenu < 3) {
-		draw_Time(hour, minute, second, 66, 50);
-		draw_Day(day, 31, 27);
-
-		if (currentMenu == 1) {
-		drawSecondsHand(second);
-		drawMinutesHand(minute);
-		drawHoursHand(hour);
-		}
-		draw = false;
-	}
-
 	if (redraw_menu == true && menu_id != currentMenu) {
 		Display.gfx_RectangleFilled(0, 25, 320, 240, 0x0000);
 		currentMenu = menu_id;
@@ -371,9 +367,6 @@ void loop() {
 			draw_AnalogBack();
 			break;
 		case 2:
-			Display.gfx_TriangleFilled(66, 102, 74, 110, 74, 94, 0xFFFF);
-			draw_Time(hour, minute, second, 66, 125);
-			draw_Day(day, 31, 102);
 			break;
 		case 3:
 			draw_Time(hour, minute, second, 66, 125);
@@ -388,11 +381,70 @@ void loop() {
 		}
 	}
 
+	if (draw == true || Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
+		switch (menu_id) {
+		case 1: /// Päävalikko
+			//Päänäkymän kellonaika
+			draw_Time(hour, minute, second, 66, 50);
+			draw_Day(day, 31, 27);
+			//Päänäkymän viisarit
+			drawSecondsHand(second);
+			drawMinutesHand(minute);
+			drawHoursHand(hour);
+			break;
+		case 2: /// Alarm
+			//Hälytyksen aika
+			Display.txt_Height(2);
+			Display.txt_Width(2);
+			Display.txt_FGcolour(colourvalue);
+			Display.gfx_MoveTo(31, 97);
+			paiva = "    Maanantai   ";
+			sprintf(tempstring, "      Alarm     ", colourvalue);
+			Display.putstr(tempstring);
+			draw_Time(alarm_hour, alarm_minute, 0, 66, 120);
+			//Hältytysnappi
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			if (alarm == true) {
+				Display.txt_BGcolour(colourvalue);
+				Display.txt_FGcolour(0x0000);
+				Display.gfx_MoveTo(115, 193);
+				sprintf(tempstring, " ON ", colourvalue);
+				Display.putstr(tempstring);
+			}
+			if (alarm == false) {
+				Display.txt_BGcolour(0x0000);
+				Display.txt_FGcolour(colourvalue);
+				Display.gfx_MoveTo(110, 193);
+				sprintf(tempstring, " OFF ", colourvalue);
+				Display.putstr(tempstring);
+			}
+			//Palautetaan tekstin taustaväri
+			Display.txt_BGcolour(0x0000);
+			//Kellonaika
+			draw_Time(hour, minute, second, 66, 50);
+			draw_Day(day, 31, 27);
+			break;
+		case 3: /// Time
+			break;
+		case 4: /// Led
+			break;
+		case 5: /// Audio
+			break;
+		default: break;
+		}
+		draw = false;
+
+	}
+
 	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
 		getTouch();
 	}
 
 	cnt = cnt + 1;
+	if (cnt > 25) {
+		cnt = 25;
+	}
 
 	//Kutsutaan päivän ja kelloajan tulostusfunktioita
 
