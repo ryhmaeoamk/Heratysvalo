@@ -37,6 +37,7 @@ int i;
 int preSeconds, preMinutes, preHours;
 float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
 int menu_id = 1, currentMenu = 1;
+bool alarm_hour_pressed = false;
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -56,7 +57,7 @@ int buttonCoord[6][2] = {
 	{ 257, 318 }
 };
 
-int touch_X, touch_Y;
+int touch_X, touch_Y, old_touch_Y;
 
 // TULOSTAMINEN &
 // PIIRTOFUNKTIOT
@@ -228,11 +229,17 @@ void getTouch() {
 			redraw_menu = true;
 		}
 	}
+
 	if (menu_id == 2 && cnt == 25) {
 		if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
 			alarm = !alarm;
 			cnt = 0;
 		}
+	}
+
+	if (touch_X >= 66 && touch_Y >= 120 && touch_X <= 126 && touch_Y <= 160 && alarm_hour_pressed == false) {
+		old_touch_Y = touch_Y;
+		alarm_hour_pressed = true;
 	}
 }
 
@@ -358,6 +365,16 @@ void loop() {
 	Display.putstr(tempstring);
 	*/
 
+	if (alarm_hour_pressed) {
+		alarm_hour = alarm_hour + ((old_touch_Y - touch_Y) / 5);
+		if (alarm_hour > 23) {
+		alarm_hour = 0;
+		}
+		if (alarm_hour < 0) {
+		alarm_hour = 23;
+		}
+	}
+
 	if (redraw_menu == true && menu_id != currentMenu) {
 		Display.gfx_RectangleFilled(0, 25, 320, 240, 0x0000);
 		currentMenu = menu_id;
@@ -369,8 +386,8 @@ void loop() {
 		case 2:
 			break;
 		case 3:
-			draw_Time(hour, minute, second, 66, 125);
-			draw_Day(day, 31, 102);
+			//draw_Time(hour, minute, second, 66, 125);
+			//draw_Day(day, 31, 102);
 			break;
 		case 4:
 			break;
@@ -381,10 +398,10 @@ void loop() {
 		}
 	}
 
-	if (draw == true || Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
+	if (draw == true) {
 		switch (menu_id) {
 		case 1: /// Päävalikko
-			//Päänäkymän kellonaika
+				//Päänäkymän kellonaika
 			draw_Time(hour, minute, second, 66, 50);
 			draw_Day(day, 31, 27);
 			//Päänäkymän viisarit
@@ -393,12 +410,11 @@ void loop() {
 			drawHoursHand(hour);
 			break;
 		case 2: /// Alarm
-			//Hälytyksen aika
+				//Hälytyksen aika
 			Display.txt_Height(2);
 			Display.txt_Width(2);
 			Display.txt_FGcolour(colourvalue);
 			Display.gfx_MoveTo(31, 97);
-			paiva = "    Maanantai   ";
 			sprintf(tempstring, "      Alarm     ", colourvalue);
 			Display.putstr(tempstring);
 			draw_Time(alarm_hour, alarm_minute, 0, 66, 120);
@@ -439,6 +455,9 @@ void loop() {
 
 	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
 		getTouch();
+	}
+	else if (Display.touch_Get(TOUCH_STATUS) == NOTOUCH && alarm_hour_pressed) {
+		alarm_hour_pressed = false;
 	}
 
 	cnt = cnt + 1;
