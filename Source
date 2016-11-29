@@ -61,11 +61,11 @@ int touch_X, touch_Y;
 // PIIRTOFUNKTIOT
 
 /// Päivän tulostus
-void draw_Day(int days) {
+void draw_Day(int days, int x, int y) {
 	Display.txt_Height(2);
 	Display.txt_Width(2);
 	Display.txt_FGcolour(colourvalue);
-	Display.gfx_MoveTo(31, 27);
+	Display.gfx_MoveTo(x, y);
 
 	if (days == 0)
 		paiva = "    Maanantai   ";
@@ -120,11 +120,11 @@ void draw_Menu() {
 }
 
 /// Kellonajan piirto
-void draw_Time(int hr, int mi, int se) {
+void draw_Time(int hr, int mi, int se, int x, int y) {
 	Display.txt_Height(3);
 	Display.txt_Width(3);
 	Display.txt_FGcolour(colourvalue);
-	Display.gfx_MoveTo(66, 50);
+	Display.gfx_MoveTo(x, y);
 	sprintf(tempstring, "%002d:%002d:%002d", hr, mi, se, colourvalue);
 	Display.putstr(tempstring);
 }
@@ -224,7 +224,7 @@ void getTouch() {
 		if (touch_X >= buttonCoord[menuCounter][0] && touch_X <= buttonCoord[menuCounter][1]
 			&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16) {
 			menu_id = menuCounter + 1;
-			redraw_menu == true;
+			redraw_menu = true;
 		}
 	}
 }
@@ -341,40 +341,51 @@ void loop() {
 
 	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
 
+	/*
+	Display.txt_Height(1);
+	Display.txt_Width(1);
+	Display.gfx_MoveTo(1, 75);
+	sprintf(tempstring, "id: %d\ncur: %d", menu_id, currentMenu, 0xFFFF);
+	Display.putstr(tempstring);
+	*/
+
 	// PÄÄ PIIRTOLOOP
-	if (draw == true && currentMenu == 1) {
-		draw_Time(hour, minute, second);
-		draw_Day(day);
+	if (draw == true && currentMenu < 3) {
+		draw_Time(hour, minute, second, 66, 50);
+		draw_Day(day, 31, 27);
+
+		if (currentMenu == 1) {
 		drawSecondsHand(second);
 		drawMinutesHand(minute);
 		drawHoursHand(hour);
+		}
 		draw = false;
 	}
 
 	if (redraw_menu == true && menu_id != currentMenu) {
-		Display.gfx_Cls();
-		draw_Menu();
+		Display.gfx_RectangleFilled(0, 25, 320, 240, 0x0000);
 		currentMenu = menu_id;
+		redraw_menu = false;
 		switch (menu_id) {
 		case 1:
 			draw_AnalogBack();
 			break;
 		case 2:
-			draw_AnalogBack();
+			Display.gfx_TriangleFilled(66, 102, 74, 110, 74, 94, 0xFFFF);
+			draw_Time(hour, minute, second, 66, 125);
+			draw_Day(day, 31, 102);
 			break;
 		case 3:
-			draw_AnalogBack();
+			draw_Time(hour, minute, second, 66, 125);
+			draw_Day(day, 31, 102);
 			break;
 		case 4:
-			
 			break;
 		case 5:
-			
 			break;
 		default:
 			break;
 		}
-		redraw_menu = false;
 	}
 
 	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
