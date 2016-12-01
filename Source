@@ -37,7 +37,11 @@ int i;
 int preSeconds, preMinutes, preHours;
 float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
 int menu_id = 1, currentMenu = 1;
-bool alarm_hour_pressed = false;
+bool alarm_hour_pressed = false, alarm_minute_pressed = false;
+bool change_hour_pressed = false, change_minute_pressed = false, change_second_pressed = false, change_day_pressed = false;
+bool is_pressed = false;
+bool time_changed = false;
+int new_hour = 0, new_minute = 0, new_second = 0, new_day = 0;
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -63,9 +67,9 @@ int touch_X, touch_Y, old_touch_Y;
 // PIIRTOFUNKTIOT
 
 /// Päivän tulostus
-void draw_Day(int days, int x, int y) {
-	Display.txt_Height(2);
-	Display.txt_Width(2);
+void draw_Day(int days, int size, int x, int y) {
+	Display.txt_Height(size);
+	Display.txt_Width(size);
 	Display.txt_FGcolour(colourvalue);
 	Display.gfx_MoveTo(x, y);
 
@@ -122,12 +126,21 @@ void draw_Menu() {
 }
 
 /// Kellonajan piirto
-void draw_Time(int hr, int mi, int se, int x, int y) {
-	Display.txt_Height(3);
-	Display.txt_Width(3);
+void draw_Time(int hr, int mi, int se, int size, int x, int y) {
+	Display.txt_Height(size);
+	Display.txt_Width(size);
 	Display.txt_FGcolour(colourvalue);
 	Display.gfx_MoveTo(x, y);
 	sprintf(tempstring, "%002d:%002d:%002d", hr, mi, se, colourvalue);
+	Display.putstr(tempstring);
+}
+
+void draw_Time2(int time, int size, int x, int y) {
+	Display.txt_Height(size);
+	Display.txt_Width(size);
+	Display.txt_FGcolour(colourvalue);
+	Display.gfx_MoveTo(x, y);
+	sprintf(tempstring, "%002d", time, colourvalue);
 	Display.putstr(tempstring);
 }
 
@@ -221,25 +234,94 @@ void getTouch() {
 	touch_X = Display.touch_Get(TOUCH_GETX);
 	touch_Y = Display.touch_Get(TOUCH_GETY);
 
-	for (int menuCounter = 0; menuCounter < 5; menuCounter++)
-	{
-		if (touch_X >= buttonCoord[menuCounter][0] && touch_X <= buttonCoord[menuCounter][1]
-			&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16) {
-			menu_id = menuCounter + 1;
-			redraw_menu = true;
+	if (!is_pressed) {
+		for (int menuCounter = 0; menuCounter < 5; menuCounter++)
+		{
+			if (touch_X >= buttonCoord[menuCounter][0] && touch_X <= buttonCoord[menuCounter][1]
+				&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16) {
+				menu_id = menuCounter + 1;
+				redraw_menu = true;
+			}
+		}
+
+		if (menu_id == 2 && cnt == 25) {
+			if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
+				alarm = !alarm;
+				cnt = 0;
+				//Hältytysnappi
+				Display.txt_Height(3);
+				Display.txt_Width(3);
+				if (alarm == true) {
+					Display.txt_BGcolour(colourvalue);
+					Display.txt_FGcolour(0x0000);
+					Display.gfx_MoveTo(115, 193);
+					sprintf(tempstring, " ON ", colourvalue);
+					Display.putstr(tempstring);
+					Display.txt_BGcolour(0x0000);
+				}
+				if (alarm == false) {
+					Display.txt_BGcolour(0x0000);
+					Display.txt_FGcolour(colourvalue);
+					Display.gfx_MoveTo(105, 193);
+					sprintf(tempstring, " OFF ", colourvalue);
+					Display.putstr(tempstring);
+				}
+			}
+		}
+
+		if (menu_id == 3 && touch_X >= 97 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
+			hour = new_hour;
+			minute = new_minute;
+			second = new_second;
+			day = new_day;
+			time_changed = true;
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			Display.txt_BGcolour(colourvalue);
+			Display.txt_FGcolour(0x0000);
+			Display.gfx_MoveTo(110, 193);
+			sprintf(tempstring, " SET ", colourvalue);
+			Display.putstr(tempstring);
+			Display.txt_BGcolour(0x0000);
+			Display.txt_FGcolour(colourvalue);
 		}
 	}
 
-	if (menu_id == 2 && cnt == 25) {
-		if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
-			alarm = !alarm;
-			cnt = 0;
-		}
-	}
-
-	if (touch_X >= 66 && touch_Y >= 120 && touch_X <= 126 && touch_Y <= 160 && alarm_hour_pressed == false) {
+	//Herätyksen asetuksen tuntien, minuuttien ja sekuntien koordinaatit
+	if (menu_id == 2 && touch_X >= 66 && touch_Y >= 120 && touch_X <= 121 && touch_Y <= 160 && !is_pressed && !alarm) {
 		old_touch_Y = touch_Y;
+		is_pressed = true;
 		alarm_hour_pressed = true;
+	}
+
+	if (menu_id == 2 && touch_X >= 121 && touch_Y >= 120 && touch_X <= 176 && touch_Y <= 160 && !is_pressed && !alarm) {
+		old_touch_Y = touch_Y;
+		is_pressed = true;
+		alarm_minute_pressed = true;
+	}
+	//Ajan muutos
+	if (menu_id == 3 && touch_X >= 66 && touch_Y >= 120 && touch_X <= 121 && touch_Y <= 160 && !is_pressed) {
+		old_touch_Y = touch_Y;
+		is_pressed = true;
+		change_hour_pressed = true;
+	}
+
+	if (menu_id == 3 && touch_X >= 121 && touch_Y >= 120 && touch_X <= 176 && touch_Y <= 160 && !is_pressed) {
+		old_touch_Y = touch_Y;
+		is_pressed = true;
+		change_minute_pressed = true;
+	}
+
+	if (menu_id == 3 && touch_X >= 176 && touch_Y >= 120 && touch_X <= 231 && touch_Y <= 160 && !is_pressed) {
+		old_touch_Y = touch_Y;
+		is_pressed = true;
+		change_second_pressed = true;
+	}
+
+	if (menu_id == 3 && touch_X >= 31 && touch_Y >= 67 && touch_X <= 269 && touch_Y <= 110 && !is_pressed) {
+		old_touch_Y = touch_Y;
+		is_pressed = true;
+		change_day_pressed = true;
 	}
 }
 
@@ -365,14 +447,176 @@ void loop() {
 	Display.putstr(tempstring);
 	*/
 
+	//Herätys ajan asetus
 	if (alarm_hour_pressed) {
-		alarm_hour = alarm_hour + ((old_touch_Y - touch_Y) / 5);
-		if (alarm_hour > 23) {
-		alarm_hour = 0;
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			alarm_hour++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			alarm_hour--;
+			old_touch_Y = touch_Y;
 		}
 		if (alarm_hour < 0) {
-		alarm_hour = 23;
+			alarm_hour = 23;
 		}
+		if (alarm_hour == 23) {
+			draw_Time2(0, 2, 73, 97);
+		}
+		else {
+			draw_Time2(alarm_hour + 1, 2, 73, 97);
+		}
+		if (alarm_hour > 23 || alarm_hour <= 0) {
+			alarm_hour = 0;
+			draw_Time2(23, 2, 73, 155);
+		}
+		else {
+			draw_Time2(alarm_hour - 1, 2, 73, 155);
+		}
+		draw_Time(alarm_hour, alarm_minute, 0, 3, 66, 120);
+	}
+
+	if (alarm_minute_pressed) {
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			alarm_minute++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			alarm_minute--;
+			old_touch_Y = touch_Y;
+		}
+		if (alarm_minute < 0) {
+			alarm_minute = 59;
+		}
+		if (alarm_minute == 59) {
+			draw_Time2(0, 2, 142, 97);
+		}
+		else {
+			draw_Time2(alarm_minute + 1, 2, 142, 97);
+		}
+		if (alarm_minute > 59 || alarm_minute <= 0) {
+			alarm_minute = 0;
+			draw_Time2(59, 2, 142, 155);
+		}
+		else {
+			draw_Time2(alarm_minute - 1, 2, 142, 155);
+		}
+		draw_Time(alarm_hour, alarm_minute, 0, 3, 66, 120);
+	}
+
+	//Ajan asetus
+	if (change_hour_pressed) {
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			new_hour++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			new_hour--;
+			old_touch_Y = touch_Y;
+		}
+		if (new_hour < 0) {
+			new_hour = 23;
+		}
+		if (new_hour == 23) {
+			draw_Time2(0, 2, 73, 97);
+		}
+		else {
+			draw_Time2(new_hour + 1, 2, 73, 97);
+		}
+		if (new_hour > 23 || new_hour <= 0) {
+			new_hour = 0;
+			draw_Time2(23, 2, 73, 155);
+		}
+		else {
+			draw_Time2(new_hour - 1, 2, 73, 155);
+		}
+		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+	}
+
+	if (change_minute_pressed) {
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			new_minute++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			new_minute--;
+			old_touch_Y = touch_Y;
+		}
+		if (new_minute < 0) {
+			new_minute = 59;
+		}
+		if (new_minute == 59) {
+			draw_Time2(0, 2, 142, 97);
+		}
+		else {
+			draw_Time2(new_minute + 1, 2, 142, 97);
+		}
+		if (new_minute > 59 || new_minute <= 0) {
+			new_minute = 0;
+			draw_Time2(59, 2, 142, 155);
+		}
+		else {
+			draw_Time2(new_minute - 1, 2, 142, 155);
+		}
+		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+	}
+
+	if (change_second_pressed) {
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			new_second++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			new_second--;
+			old_touch_Y = touch_Y;
+		}
+		if (new_second < 0) {
+			new_second = 59;
+		}
+		if (new_second == 59) {
+			draw_Time2(0, 2, 211, 97);
+		}
+		else {
+			draw_Time2(new_second + 1, 2, 211, 97);
+		}
+		if (new_second > 59 || new_second <= 0) {
+			new_second = 0;
+			draw_Time2(59, 2, 211, 155);
+		}
+		else {
+			draw_Time2(new_second - 1, 2, 211, 155);
+		}
+		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+	}
+
+	if (change_day_pressed) {
+		if ((old_touch_Y - touch_Y) < (-4)) {
+			new_day++;
+			old_touch_Y = touch_Y;
+		}
+		if ((old_touch_Y - touch_Y) > 4) {
+			new_day--;
+			old_touch_Y = touch_Y;
+		}
+		if (new_day < 0) {
+			new_day = 6;
+		}
+		if (new_day > 6) {
+			new_day = 0;
+		}
+		if (new_day == 0) {
+			draw_Day(6, 1, 103, 55);
+		}
+		else {
+			draw_Day(new_day - 1, 1, 103, 55);
+		}
+		if (new_day == 6) {
+			draw_Day(0, 1, 103, 94);
+		}
+		else {
+			draw_Day(new_day + 1, 1, 103, 94);
+		}
+		draw_Day(new_day, 2, 31, 67);
 	}
 
 	if (redraw_menu == true && menu_id != currentMenu) {
@@ -384,10 +628,49 @@ void loop() {
 			draw_AnalogBack();
 			break;
 		case 2:
+			draw_Time(alarm_hour, alarm_minute, 0, 3, 66, 120);
+			/*
+			Display.txt_Height(2);
+			Display.txt_Width(2);
+			Display.txt_FGcolour(colourvalue);
+			Display.gfx_MoveTo(120, 97);
+			sprintf(tempstring, "Alarm", colourvalue);
+			Display.putstr(tempstring);
+			*/
+			//Kellonaika
+			draw_Time(hour, minute, second, 3, 66, 50);
+			draw_Day(day, 2, 31, 27);
+			//Hältytysnappi
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			if (alarm == true) {
+				Display.txt_BGcolour(colourvalue);
+				Display.txt_FGcolour(0x0000);
+				Display.gfx_MoveTo(115, 193);
+				sprintf(tempstring, " ON ", colourvalue);
+				Display.putstr(tempstring);
+				Display.txt_BGcolour(0x0000);
+			}
+			if (alarm == false) {
+				Display.txt_BGcolour(0x0000);
+				Display.txt_FGcolour(colourvalue);
+				Display.gfx_MoveTo(110, 193);
+				sprintf(tempstring, " OFF ", colourvalue);
+				Display.putstr(tempstring);
+			}
 			break;
 		case 3:
-			//draw_Time(hour, minute, second, 66, 125);
-			//draw_Day(day, 31, 102);
+			new_hour = hour;
+			new_minute = minute;
+			new_second = second;
+			new_day = day;
+			draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+			draw_Day(new_day, 2, 31, 67);
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			Display.gfx_MoveTo(110, 193);
+			sprintf(tempstring, " SET ", colourvalue);
+			Display.putstr(tempstring);
 			break;
 		case 4:
 			break;
@@ -402,46 +685,21 @@ void loop() {
 		switch (menu_id) {
 		case 1: /// Päävalikko
 				//Päänäkymän kellonaika
-			draw_Time(hour, minute, second, 66, 50);
-			draw_Day(day, 31, 27);
+			draw_Time(hour, minute, second, 3, 66, 50);
+			draw_Day(day, 2, 31, 27);
 			//Päänäkymän viisarit
 			drawSecondsHand(second);
 			drawMinutesHand(minute);
 			drawHoursHand(hour);
 			break;
-		case 2: /// Alarm
-				//Hälytyksen aika
-			Display.txt_Height(2);
-			Display.txt_Width(2);
-			Display.txt_FGcolour(colourvalue);
-			Display.gfx_MoveTo(31, 97);
-			sprintf(tempstring, "      Alarm     ", colourvalue);
-			Display.putstr(tempstring);
-			draw_Time(alarm_hour, alarm_minute, 0, 66, 120);
-			//Hältytysnappi
-			Display.txt_Height(3);
-			Display.txt_Width(3);
-			if (alarm == true) {
-				Display.txt_BGcolour(colourvalue);
-				Display.txt_FGcolour(0x0000);
-				Display.gfx_MoveTo(115, 193);
-				sprintf(tempstring, " ON ", colourvalue);
-				Display.putstr(tempstring);
-			}
-			if (alarm == false) {
-				Display.txt_BGcolour(0x0000);
-				Display.txt_FGcolour(colourvalue);
-				Display.gfx_MoveTo(110, 193);
-				sprintf(tempstring, " OFF ", colourvalue);
-				Display.putstr(tempstring);
-			}
-			//Palautetaan tekstin taustaväri
-			Display.txt_BGcolour(0x0000);
+		case 2: // Alarm
 			//Kellonaika
-			draw_Time(hour, minute, second, 66, 50);
-			draw_Day(day, 31, 27);
+			draw_Time(hour, minute, second, 3, 66, 50);
+			draw_Day(day, 2, 31, 27);
 			break;
 		case 3: /// Time
+			//draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+			//draw_Day(new_day, 31, 97);
 			break;
 		case 4: /// Led
 			break;
@@ -456,13 +714,41 @@ void loop() {
 	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
 		getTouch();
 	}
-	else if (Display.touch_Get(TOUCH_STATUS) == NOTOUCH && alarm_hour_pressed) {
-		alarm_hour_pressed = false;
+	else if (Display.touch_Get(TOUCH_STATUS) == NOTOUCH) {
+		if (is_pressed) {
+			is_pressed = false;
+		}
+		if (alarm_hour_pressed || alarm_minute_pressed) {
+			alarm_hour_pressed = false;
+			alarm_minute_pressed = false;
+			Display.gfx_RectangleFilled(0, 97, 320, 120, 0x0000);
+			Display.gfx_RectangleFilled(0, 150, 320, 180, 0x0000);
+		}
+		if (change_hour_pressed || change_minute_pressed || change_second_pressed || change_day_pressed) {
+			change_hour_pressed = false;
+			change_minute_pressed = false;
+			change_second_pressed = false;
+			change_day_pressed = false;
+			Display.gfx_RectangleFilled(0, 94, 320, 120, 0x0000);
+			Display.gfx_RectangleFilled(0, 150, 320, 180, 0x0000);
+			Display.gfx_RectangleFilled(0, 55, 320, 68, 0x0000);
+		}
+		if (time_changed) {
+			time_changed = false;
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			Display.txt_BGcolour(0x0000);
+			Display.txt_FGcolour(colourvalue);
+			Display.gfx_MoveTo(110, 193);
+			sprintf(tempstring, " SET ", colourvalue);
+			Display.putstr(tempstring);
+		}
 	}
 
 	cnt = cnt + 1;
 	if (cnt > 25) {
 		cnt = 25;
+
 	}
 
 	//Kutsutaan päivän ja kelloajan tulostusfunktioita
