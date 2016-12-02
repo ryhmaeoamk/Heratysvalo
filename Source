@@ -384,6 +384,11 @@ void setup() {
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
 
+	Display.file_Mount();
+	Display.snd_Volume(127);
+	//Display.snd_Pitch();
+	//Display.snd_BufSize(1);
+
 	Display.touch_Set(TOUCH_ENABLE);
 	Display.touch_Set(TOUCH_REGIONDEFAULT);
 
@@ -446,6 +451,10 @@ void loop() {
 	sprintf(tempstring, "id: %d\ncur: %d", menu_id, currentMenu, 0xFFFF);
 	Display.putstr(tempstring);
 	*/
+
+	if (Display.snd_Playing() == 0) {
+		Display.file_PlayWAV("alarm1.wav");
+	}
 
 	//Herätys ajan asetus
 	if (alarm_hour_pressed) {
@@ -590,11 +599,11 @@ void loop() {
 	}
 
 	if (change_day_pressed) {
-		if ((old_touch_Y - touch_Y) < (-4)) {
+		if ((old_touch_Y - touch_Y) < (-6)) {
 			new_day++;
 			old_touch_Y = touch_Y;
 		}
-		if ((old_touch_Y - touch_Y) > 4) {
+		if ((old_touch_Y - touch_Y) > 6) {
 			new_day--;
 			old_touch_Y = touch_Y;
 		}
@@ -605,16 +614,16 @@ void loop() {
 			new_day = 0;
 		}
 		if (new_day == 0) {
-			draw_Day(6, 1, 103, 55);
+			draw_Day(6, 1, 103, 94);
 		}
 		else {
-			draw_Day(new_day - 1, 1, 103, 55);
+			draw_Day(new_day - 1, 1, 103, 94);
 		}
 		if (new_day == 6) {
-			draw_Day(0, 1, 103, 94);
+			draw_Day(0, 1, 103, 55);
 		}
 		else {
-			draw_Day(new_day + 1, 1, 103, 94);
+			draw_Day(new_day + 1, 1, 103, 55);
 		}
 		draw_Day(new_day, 2, 31, 67);
 	}
@@ -639,7 +648,7 @@ void loop() {
 			*/
 			//Kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
-			draw_Day(day, 2, 31, 27);
+			draw_Day(day, 2, 31, 26);
 			//Hältytysnappi
 			Display.txt_Height(3);
 			Display.txt_Width(3);
@@ -686,7 +695,7 @@ void loop() {
 		case 1: /// Päävalikko
 				//Päänäkymän kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
-			draw_Day(day, 2, 31, 27);
+			draw_Day(day, 2, 31, 26);
 			//Päänäkymän viisarit
 			drawSecondsHand(second);
 			drawMinutesHand(minute);
@@ -695,7 +704,7 @@ void loop() {
 		case 2: // Alarm
 			//Kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
-			draw_Day(day, 2, 31, 27);
+			draw_Day(day, 2, 31, 26);
 			break;
 		case 3: /// Time
 			//draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
