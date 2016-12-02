@@ -244,6 +244,12 @@ void getTouch() {
 			}
 		}
 
+		if (menu_id == 4 && touch_X >= 34 && touch_Y >= 183 && touch_X <= 283 && touch_Y <= 199) {
+			//Display.gfx_Rectangle(34, 183, 283, 199, 0x0000);
+
+
+		}
+
 		if (menu_id == 2 && cnt == 25) {
 			if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
 				alarm = !alarm;
@@ -385,7 +391,7 @@ void setup() {
 	Display.gfx_Cls(); // Clear Screen
 
 	Display.file_Mount();
-	Display.snd_Volume(127);
+	Display.snd_Volume(65);
 	//Display.snd_Pitch();
 	//Display.snd_BufSize(1);
 
@@ -453,7 +459,8 @@ void loop() {
 	*/
 
 	if (Display.snd_Playing() == 0) {
-		Display.file_PlayWAV("alarm1.wav");
+		
+		//Display.file_PlayWAV("alarm2.wav");
 	}
 
 	//Herätys ajan asetus
@@ -682,8 +689,15 @@ void loop() {
 			Display.putstr(tempstring);
 			break;
 		case 4:
+	
 			break;
 		case 5:
+			Display.txt_Height(2);
+			Display.txt_Width(2);
+			Display.gfx_MoveTo(110, 193);
+			sprintf(tempstring, "PREVIEW", colourvalue);
+			Display.putstr(tempstring);
+
 			break;
 		default:
 			break;
@@ -702,17 +716,18 @@ void loop() {
 			drawHoursHand(hour);
 			break;
 		case 2: // Alarm
-			//Kellonaika
+				//Kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
 			draw_Day(day, 2, 31, 26);
 			break;
 		case 3: /// Time
-			//draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
-			//draw_Day(new_day, 31, 97);
+				//draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
+				//draw_Day(new_day, 31, 97);
 			break;
 		case 4: /// Led
 			break;
 		case 5: /// Audio
+		
 			break;
 		default: break;
 		}
@@ -726,6 +741,24 @@ void loop() {
 	else if (Display.touch_Get(TOUCH_STATUS) == NOTOUCH) {
 		if (is_pressed) {
 			is_pressed = false;
+		}
+		//kosketuksen päivitys caset
+		switch (menu_id) {
+		case 1: ///päävalikko
+			break;
+		case 2: ///alarm
+			break;
+		case 3: ///set time
+			break;
+		case 4: ///led
+			break;
+		case 5: ///audio
+
+			break;
+		case 6: ///hidden alarm
+			break;
+
+
 		}
 		if (alarm_hour_pressed || alarm_minute_pressed) {
 			alarm_hour_pressed = false;
