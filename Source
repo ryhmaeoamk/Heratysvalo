@@ -6,16 +6,19 @@
 Picaso_Serial_4DLib Display(&DisplaySerial);
 
 // ALKUMÄÄRITYKSET
-char * paiva;
 /// Valikkojen määritykset
 int menu = 1;
 int select = 1;
+int menu_id = 1, currentMenu = 1;
 /// Ajan muuttujat
 int timer1_counter;
 unsigned int day = 6;
 unsigned int hour = 23;
 unsigned int minute = 59;
 unsigned int second = 0;
+char * paiva;
+int preSeconds, preMinutes, preHours;
+float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
 /// Hälytyksen muuttujat
 int alarm_hour = 0;
 int alarm_minute = 0;
@@ -34,25 +37,13 @@ int cX = 162;
 int cY = 160;
 const float DegreesToRadians = 0.0174533;
 int i;
-int preSeconds, preMinutes, preHours;
-float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
-int menu_id = 1, currentMenu = 1;
+/// Touch muuttujia
 bool alarm_hour_pressed = false, alarm_minute_pressed = false;
 bool change_hour_pressed = false, change_minute_pressed = false, change_second_pressed = false, change_day_pressed = false;
 bool is_pressed = false;
 bool time_changed = false;
 int new_hour = 0, new_minute = 0, new_second = 0, new_day = 0;
-
-/*
-int mainButton_x1 = 1, mainButton_x2 = 62;
-int alarmButton_x1 = 65, alarmButton_x2 = 126;
-int timeButton_x1 = 129, timeButton_x2 = 190;
-int ledButton_x1 = 193, ledButton_x2 = 254;
-int audioButton_x1 = 257, audioButton_x2 = 318;
-*/
-
 int button_y1 = 1, button_y2 = 24;
-
 int buttonCoord[6][2] = {
 	{ 1, 62 } ,
 	{ 65, 126 } ,
@@ -60,8 +51,14 @@ int buttonCoord[6][2] = {
 	{ 193, 254 } ,
 	{ 257, 318 }
 };
-
 int touch_X, touch_Y, old_touch_Y;
+/*
+int mainButton_x1 = 1, mainButton_x2 = 62;
+int alarmButton_x1 = 65, alarmButton_x2 = 126;
+int timeButton_x1 = 129, timeButton_x2 = 190;
+int ledButton_x1 = 193, ledButton_x2 = 254;
+int audioButton_x1 = 257, audioButton_x2 = 318;
+*/
 
 // TULOSTAMINEN &
 // PIIRTOFUNKTIOT
@@ -94,17 +91,16 @@ void draw_Day(int days, int size, int x, int y) {
 
 /// Valikon piirto
 void draw_Menu() {
+	/// Asetetaan väri
 	colourvalue = 0xFFE0;
-
 	/// Painikkeiden reunat
 	for (int i = 0; i < 5; i++)
 	{
 		Display.gfx_Rectangle(buttonCoord[i][0], button_y1, buttonCoord[i][1], button_y2, colourvalue);
 	}
-
 	/// Fontin väri
 	Display.txt_FGcolour(colourvalue);
-
+	/// Fontin koko
 	Display.txt_Width(1);
 	Display.txt_Height(1);
 
@@ -234,6 +230,7 @@ void getTouch() {
 	touch_X = Display.touch_Get(TOUCH_GETX);
 	touch_Y = Display.touch_Get(TOUCH_GETY);
 
+	// Valikon vaihtaminen
 	if (!is_pressed) {
 		for (int menuCounter = 0; menuCounter < 5; menuCounter++)
 		{
@@ -275,6 +272,7 @@ void getTouch() {
 			}
 		}
 
+		// Kellonajan asettaminen (SET nappi)
 		if (menu_id == 3 && touch_X >= 97 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
 			hour = new_hour;
 			minute = new_minute;
@@ -305,6 +303,7 @@ void getTouch() {
 		is_pressed = true;
 		alarm_minute_pressed = true;
 	}
+
 	//Ajan muutos
 	if (menu_id == 3 && touch_X >= 66 && touch_Y >= 120 && touch_X <= 121 && touch_Y <= 160 && !is_pressed) {
 		old_touch_Y = touch_Y;
@@ -390,6 +389,7 @@ void setup() {
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
 
+	// SD Kortin mounttaus ja volumen asettaminen
 	Display.file_Mount();
 	Display.snd_Volume(65);
 	//Display.snd_Pitch();
@@ -398,6 +398,7 @@ void setup() {
 	Display.touch_Set(TOUCH_ENABLE);
 	Display.touch_Set(TOUCH_REGIONDEFAULT);
 
+	// Piirretään menut
 	draw_Menu();
 	draw_AnalogBack();
 }
@@ -414,13 +415,11 @@ ISR(TIMER1_OVF_vect)
 	if (second == 60) {
 		second = 0;
 		minute++;
-
 	}
 	//Minuutit
 	if (minute == 60) {
 		minute = 0;
 		hour++;
-
 	}
 	//Tunnit
 	if (hour == 24) {
@@ -428,14 +427,11 @@ ISR(TIMER1_OVF_vect)
 		minute = 0;
 		second = 0;
 		day++;
-
 	}
 	//Päivät
 	if (day == 7) {
 		day = 0;
 	}
-
-
 
 	// Draw trueksi
 	draw = true;
@@ -448,18 +444,9 @@ ISR(TIMER1_OVF_vect)
 /// ********************** ///
 void loop() {
 
-	/// Jos sekunnit menevät yli 604799 (=Yksi viikko) niin nollataan ne
-
-	/*
-	Display.txt_Height(1);
-	Display.txt_Width(1);
-	Display.gfx_MoveTo(1, 75);
-	sprintf(tempstring, "id: %d\ncur: %d", menu_id, currentMenu, 0xFFFF);
-	Display.putstr(tempstring);
-	*/
-
+	// ÄÄNEN TESTAUSTA VARTEN
 	if (Display.snd_Playing() == 0) {
-		
+
 		//Display.file_PlayWAV("alarm2.wav");
 	}
 
@@ -520,7 +507,9 @@ void loop() {
 		draw_Time(alarm_hour, alarm_minute, 0, 3, 66, 120);
 	}
 
-	//Ajan asetus
+	// AJAN ASETUS
+
+	/// Tuntien muuttaminen
 	if (change_hour_pressed) {
 		if ((old_touch_Y - touch_Y) < (-4)) {
 			new_hour++;
@@ -549,6 +538,7 @@ void loop() {
 		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
 	}
 
+	/// Minuuttien muuttaminen
 	if (change_minute_pressed) {
 		if ((old_touch_Y - touch_Y) < (-4)) {
 			new_minute++;
@@ -577,6 +567,7 @@ void loop() {
 		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
 	}
 
+	/// Sekunttien muuttaminen
 	if (change_second_pressed) {
 		if ((old_touch_Y - touch_Y) < (-4)) {
 			new_second++;
@@ -605,6 +596,7 @@ void loop() {
 		draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
 	}
 
+	/// Päivien muuttaminen
 	if (change_day_pressed) {
 		if ((old_touch_Y - touch_Y) < (-6)) {
 			new_day++;
@@ -635,15 +627,16 @@ void loop() {
 		draw_Day(new_day, 2, 31, 67);
 	}
 
+	// Menujen piirtäminen
 	if (redraw_menu == true && menu_id != currentMenu) {
 		Display.gfx_RectangleFilled(0, 25, 320, 240, 0x0000);
 		currentMenu = menu_id;
 		redraw_menu = false;
 		switch (menu_id) {
-		case 1:
+		case 1: /// MAIN
 			draw_AnalogBack();
 			break;
-		case 2:
+		case 2: /// ALARM
 			draw_Time(alarm_hour, alarm_minute, 0, 3, 66, 120);
 			/*
 			Display.txt_Height(2);
@@ -675,7 +668,7 @@ void loop() {
 				Display.putstr(tempstring);
 			}
 			break;
-		case 3:
+		case 3: /// TIME
 			new_hour = hour;
 			new_minute = minute;
 			new_second = second;
@@ -688,46 +681,46 @@ void loop() {
 			sprintf(tempstring, " SET ", colourvalue);
 			Display.putstr(tempstring);
 			break;
-		case 4:
-	
+		case 4: /// LED
 			break;
-		case 5:
+		case 5: /// AUDIO
 			Display.txt_Height(2);
 			Display.txt_Width(2);
 			Display.gfx_MoveTo(110, 193);
 			sprintf(tempstring, "PREVIEW", colourvalue);
 			Display.putstr(tempstring);
-
 			break;
+		case 6: /// HIDDEN ALARM
 		default:
 			break;
 		}
 	}
 
+	// Tämä piirto tapahtuu joka sekuntti!
 	if (draw == true) {
 		switch (menu_id) {
-		case 1: /// Päävalikko
-				//Päänäkymän kellonaika
+		case 1: /// MAIN
+			/// Päänäkymän kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
 			draw_Day(day, 2, 31, 26);
-			//Päänäkymän viisarit
+			/// Päänäkymän viisarit
 			drawSecondsHand(second);
 			drawMinutesHand(minute);
 			drawHoursHand(hour);
 			break;
-		case 2: // Alarm
-				//Kellonaika
+		case 2: /// ALARM
 			draw_Time(hour, minute, second, 3, 66, 50);
 			draw_Day(day, 2, 31, 26);
 			break;
-		case 3: /// Time
+		case 3: /// TIME
 				//draw_Time(new_hour, new_minute, new_second, 3, 66, 120);
 				//draw_Day(new_day, 31, 97);
 			break;
-		case 4: /// Led
+		case 4: /// LED
 			break;
-		case 5: /// Audio
-		
+		case 5: /// AUDIO
+			break;
+		case 6: /// HIDDEN ALARM
 			break;
 		default: break;
 		}
@@ -735,31 +728,34 @@ void loop() {
 
 	}
 
+	// Touching päivitys
 	if (Display.touch_Get(TOUCH_STATUS) != NOTOUCH) {
 		getTouch();
 	}
+
+	// Kosketuksen päivitys caset
 	else if (Display.touch_Get(TOUCH_STATUS) == NOTOUCH) {
 		if (is_pressed) {
 			is_pressed = false;
 		}
-		//kosketuksen päivitys caset
 		switch (menu_id) {
-		case 1: ///päävalikko
+		case 1: /// MAIN
 			break;
-		case 2: ///alarm
+		case 2: /// ALARM
 			break;
-		case 3: ///set time
+		case 3: /// TIME
 			break;
-		case 4: ///led
+		case 4: /// LED
 			break;
-		case 5: ///audio
-
+		case 5: /// AUDIO
 			break;
-		case 6: ///hidden alarm
+		case 6: /// HIDDEN ALARM
 			break;
-
-
+		default:
+			break;
 		}
+
+		// Hälytyksen tuntien piirtohomma
 		if (alarm_hour_pressed || alarm_minute_pressed) {
 			alarm_hour_pressed = false;
 			alarm_minute_pressed = false;
@@ -787,12 +783,11 @@ void loop() {
 		}
 	}
 
+	// Program countteri joka nollaantuu 25
 	cnt = cnt + 1;
 	if (cnt > 25) {
 		cnt = 25;
 
 	}
-
-	//Kutsutaan päivän ja kelloajan tulostusfunktioita
 
 }
