@@ -55,7 +55,7 @@ int buttonCoord[6][2] = {
 	{ 257, 318 }
 };
 int touch_X, touch_Y, old_touch_Y;
-int r_pos = 122, g_pos = 122, b_pos = 122, r_value = 122, g_value = 122, b_value = 122;
+int r_pos = 255, g_pos = 255, b_pos = 0, r_value = 255, g_value = 255, b_value = 0;
 unsigned short rgb_value;
 bool preset_pressed = false;
 
@@ -314,7 +314,7 @@ void getTouch() {
 			Display.putstr(tempstring);
 		}
 
-		if (menu_id == 4 && touch_Y >= 35 && touch_Y <= 77 && cnt == 25) {
+		if (menu_id == 4 && touch_Y >= 40 && touch_Y <= 77 && cnt == 25) {
 			if (touch_X >= 28 && touch_X <= 68) {
 				r_pos = 255, g_pos = 0, b_pos = 0;
 				preset_pressed = true;
@@ -371,13 +371,13 @@ void getTouch() {
 		change_hour_pressed = true;
 	}
 
-	if (menu_id == 3 && touch_X >= 121 && touch_Y >= 120 && touch_X <= 176 && touch_Y <= 160 && !is_pressed) {
+	if (menu_id == 3 && touch_X >= 122 && touch_Y >= 120 && touch_X <= 176 && touch_Y <= 160 && !is_pressed) {
 		old_touch_Y = touch_Y;
 		is_pressed = true;
 		change_minute_pressed = true;
 	}
 
-	if (menu_id == 3 && touch_X >= 176 && touch_Y >= 120 && touch_X <= 231 && touch_Y <= 160 && !is_pressed) {
+	if (menu_id == 3 && touch_X >= 177 && touch_Y >= 120 && touch_X <= 246 && touch_Y <= 160 && !is_pressed) {
 		old_touch_Y = touch_Y;
 		is_pressed = true;
 		change_second_pressed = true;
@@ -674,11 +674,11 @@ void loop() {
 
 	/// Päivien muuttaminen
 	if (change_day_pressed) {
-		if ((old_touch_Y - touch_Y) < (-6)) {
+		if ((old_touch_Y - touch_Y) < (-9)) {
 			new_day++;
 			old_touch_Y = touch_Y;
 		}
-		if ((old_touch_Y - touch_Y) > 6) {
+		if ((old_touch_Y - touch_Y) > 9) {
 			new_day--;
 			old_touch_Y = touch_Y;
 		}
