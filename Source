@@ -5,6 +5,8 @@
 #include <math.h>
 Picaso_Serial_4DLib Display(&DisplaySerial);
 
+#define RGB2COLOR(r, g, b) ((((r>>3)<<11) | ((g>>2)<<5) | (b>>3)))
+
 // ALKUMÄÄRITYKSET
 /// Valikkojen määritykset
 int menu = 1;
@@ -30,7 +32,7 @@ long cnt = 0;
 long lastCnt = 0;
 bool draw = true;
 /// Piirtämiseen liittyviä
-int colourvalue; // HEXANA
+unsigned short colourvalue = 0xFFE0; // HEXANA
 char tempstring[256] = { 0 }; // Temporary String Variable for putstr
 bool redraw_menu = true;
 int cX = 162;
@@ -40,8 +42,9 @@ int i;
 /// Touch muuttujia
 bool alarm_hour_pressed = false, alarm_minute_pressed = false;
 bool change_hour_pressed = false, change_minute_pressed = false, change_second_pressed = false, change_day_pressed = false;
+bool change_r_pressed = false, change_g_pressed = false, change_b_pressed = false;
 bool is_pressed = false;
-bool time_changed = false;
+bool time_changed = false, colour_changed = false;
 int new_hour = 0, new_minute = 0, new_second = 0, new_day = 0;
 int button_y1 = 1, button_y2 = 24;
 int buttonCoord[6][2] = {
@@ -52,6 +55,10 @@ int buttonCoord[6][2] = {
 	{ 257, 318 }
 };
 int touch_X, touch_Y, old_touch_Y;
+int r_pos = 122, g_pos = 122, b_pos = 122, r_value = 122, g_value = 122, b_value = 122;
+unsigned short rgb_value;
+bool preset_pressed = false;
+
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
 int alarmButton_x1 = 65, alarmButton_x2 = 126;
@@ -91,8 +98,6 @@ void draw_Day(int days, int size, int x, int y) {
 
 /// Valikon piirto
 void draw_Menu() {
-	/// Asetetaan väri
-	colourvalue = 0xFFE0;
 	/// Painikkeiden reunat
 	for (int i = 0; i < 5; i++)
 	{
@@ -169,8 +174,6 @@ void draw_Ticks() {
 
 ///Analogisen kellon pohjan piirtäminen
 void draw_AnalogBack() {
-
-	colourvalue = 0xFFE0;
 	Display.gfx_Circle(162, 160, 70, colourvalue);
 	Display.gfx_Circle(162, 160, 71, colourvalue);
 	Display.gfx_Circle(162, 160, 72, colourvalue);
@@ -242,7 +245,7 @@ void getTouch() {
 		}
 
 		if (menu_id == 4 && touch_X >= 34 && touch_Y >= 183 && touch_X <= 283 && touch_Y <= 199) {
-			//Display.gfx_Rectangle(34, 183, 283, 199, 0x0000);
+			//Display.gfx_Rectangle(34, 183, 283, 199, BLACK);
 
 
 		}
@@ -256,14 +259,15 @@ void getTouch() {
 				Display.txt_Width(3);
 				if (alarm == true) {
 					Display.txt_BGcolour(colourvalue);
-					Display.txt_FGcolour(0x0000);
+					Display.txt_FGcolour(BLACK);
 					Display.gfx_MoveTo(115, 193);
 					sprintf(tempstring, " ON ", colourvalue);
 					Display.putstr(tempstring);
-					Display.txt_BGcolour(0x0000);
+					Display.txt_BGcolour(BLACK);
+					Display.txt_FGcolour(colourvalue);
 				}
 				if (alarm == false) {
-					Display.txt_BGcolour(0x0000);
+					Display.txt_BGcolour(BLACK);
 					Display.txt_FGcolour(colourvalue);
 					Display.gfx_MoveTo(105, 193);
 					sprintf(tempstring, " OFF ", colourvalue);
@@ -273,7 +277,8 @@ void getTouch() {
 		}
 
 		// Kellonajan asettaminen (SET nappi)
-		if (menu_id == 3 && touch_X >= 97 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
+		if (menu_id == 3 && touch_X >= 97 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226 && cnt == 25) {
+			cnt = 0;
 			hour = new_hour;
 			minute = new_minute;
 			second = new_second;
@@ -282,12 +287,67 @@ void getTouch() {
 			Display.txt_Height(3);
 			Display.txt_Width(3);
 			Display.txt_BGcolour(colourvalue);
-			Display.txt_FGcolour(0x0000);
+			Display.txt_FGcolour(BLACK);
 			Display.gfx_MoveTo(110, 193);
 			sprintf(tempstring, " SET ", colourvalue);
 			Display.putstr(tempstring);
-			Display.txt_BGcolour(0x0000);
+			Display.txt_BGcolour(BLACK);
 			Display.txt_FGcolour(colourvalue);
+		}
+
+		// Värin asettaminen (SET nappi)
+		if (menu_id == 4 && touch_X >= 97 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226 && cnt == 25) {
+			cnt = 0;
+			r_value = r_pos;
+			g_value = g_pos;
+			b_value = b_pos;
+			rgb_value = RGB2COLOR(r_value, g_value, b_value);
+			colourvalue = rgb_value;
+			Display.gfx_Set(OBJECT_COLOUR, colourvalue);
+			colour_changed = true;
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			Display.txt_BGcolour(BLACK);
+			Display.txt_FGcolour(colourvalue);
+			Display.gfx_MoveTo(110, 193);
+			sprintf(tempstring, " SET ", colourvalue);
+			Display.putstr(tempstring);
+		}
+
+		if (menu_id == 4 && touch_Y >= 35 && touch_Y <= 77 && cnt == 25) {
+			if (touch_X >= 28 && touch_X <= 68) {
+				r_pos = 255, g_pos = 0, b_pos = 0;
+				preset_pressed = true;
+			}
+
+			if (touch_X >= 69 && touch_X <= 110) {
+				r_pos = 0, g_pos = 0, b_pos = 255;
+				preset_pressed = true;
+			}
+
+			if (touch_X >= 111 && touch_X <= 152) {
+				r_pos = 0, g_pos = 255, b_pos = 0;
+				preset_pressed = true;
+			}
+
+			if (touch_X >= 153 && touch_X <= 194) {
+				r_pos = 255, g_pos = 255, b_pos = 0;
+				preset_pressed = true;
+			}
+
+			if (touch_X >= 195 && touch_X <= 236) {
+				r_pos = 128, g_pos = 0, b_pos = 128;
+				preset_pressed = true;
+			}
+
+			if (touch_X >= 237 && touch_X <= 278) {
+				r_pos = 255, g_pos = 128, b_pos = 0;
+				preset_pressed = true;
+			}
+
+			Display.gfx_Slider(0, 25, 90, 280, 110, BLACK, 255, r_pos);
+			Display.gfx_Slider(0, 25, 120, 280, 140, BLACK, 255, g_pos);
+			Display.gfx_Slider(0, 25, 150, 280, 170, BLACK, 255, b_pos);
 		}
 	}
 
@@ -327,6 +387,21 @@ void getTouch() {
 		old_touch_Y = touch_Y;
 		is_pressed = true;
 		change_day_pressed = true;
+	}
+
+	if (menu_id == 4 && touch_X >= 25 && touch_Y >= 86 && touch_X <= 280 && touch_Y <= 115 && !is_pressed) {
+		is_pressed = true;
+		change_r_pressed = true;
+	}
+
+	if (menu_id == 4 && touch_X >= 25 && touch_Y >= 116 && touch_X <= 280 && touch_Y <= 145 && !is_pressed) {
+		is_pressed = true;
+		change_g_pressed = true;
+	}
+
+	if (menu_id == 4 && touch_X >= 25 && touch_Y >= 146 && touch_X <= 280 && touch_Y <= 175 && !is_pressed) {
+		is_pressed = true;
+		change_b_pressed = true;
 	}
 }
 
@@ -386,10 +461,11 @@ void setup() {
 	Display.TimeLimit4D = 5000; // 5 second timeout on all commands  
 	Display.gfx_BGcolour(BLACK); // Make it text on white background
 	Display.txt_BGcolour(BLACK);
+	Display.gfx_Set(OBJECT_COLOUR, colourvalue);
 	Display.gfx_ScreenMode(4); // Landscape, microSD Card Facing Up  
 	Display.gfx_Cls(); // Clear Screen
 
-	// SD Kortin mounttaus ja volumen asettaminen
+					   // SD Kortin mounttaus ja volumen asettaminen
 	Display.file_Mount();
 	Display.snd_Volume(65);
 	//Display.snd_Pitch();
@@ -627,11 +703,51 @@ void loop() {
 		draw_Day(new_day, 2, 31, 67);
 	}
 
+	if (change_r_pressed) {
+		r_pos = touch_X - 25;
+		if (r_pos < 0) r_pos = 0;
+		if (r_pos > 255) r_pos = 255;
+		Display.gfx_Slider(0, 25, 90, 280, 110, BLACK, 255, r_pos);
+	}
+
+	if (change_g_pressed) {
+		g_pos = touch_X - 25;
+		if (g_pos < 0) g_pos = 0;
+		if (g_pos > 255) g_pos = 255;
+		Display.gfx_Slider(0, 25, 120, 280, 140, BLACK, 255, g_pos);
+	}
+
+	if (change_b_pressed) {
+		b_pos = touch_X - 25;
+		if (b_pos < 0) b_pos = 0;
+		if (b_pos > 255) b_pos = 255;
+		Display.gfx_Slider(0, 25, 150, 280, 170, BLACK, 255, b_pos);
+	}
+
+	if (change_r_pressed || change_g_pressed || change_b_pressed || preset_pressed) {
+		Display.txt_Height(3);
+		Display.txt_Width(3);
+		Display.gfx_MoveTo(110, 193);
+		rgb_value = RGB2COLOR(r_pos, g_pos, b_pos);
+		Display.txt_BGcolour(rgb_value);
+		Display.txt_FGcolour(BLACK);
+		sprintf(tempstring, " SET ", BLACK);
+		Display.putstr(tempstring);
+		Display.txt_BGcolour(BLACK);
+		Display.txt_FGcolour(colourvalue);
+	}
+
 	// Menujen piirtäminen
-	if (redraw_menu == true && menu_id != currentMenu) {
-		Display.gfx_RectangleFilled(0, 25, 320, 240, 0x0000);
+	if ((redraw_menu == true && menu_id != currentMenu) || colour_changed) {
+		Display.gfx_RectangleFilled(0, 25, 320, 240, BLACK);
 		currentMenu = menu_id;
 		redraw_menu = false;
+
+		if (colour_changed) {
+			draw_Menu();
+			colour_changed = false;
+		}
+
 		switch (menu_id) {
 		case 1: /// MAIN
 			draw_AnalogBack();
@@ -654,14 +770,15 @@ void loop() {
 			Display.txt_Width(3);
 			if (alarm == true) {
 				Display.txt_BGcolour(colourvalue);
-				Display.txt_FGcolour(0x0000);
+				Display.txt_FGcolour(BLACK);
 				Display.gfx_MoveTo(115, 193);
 				sprintf(tempstring, " ON ", colourvalue);
 				Display.putstr(tempstring);
-				Display.txt_BGcolour(0x0000);
+				Display.txt_BGcolour(BLACK);
+				Display.txt_FGcolour(colourvalue);
 			}
 			if (alarm == false) {
-				Display.txt_BGcolour(0x0000);
+				Display.txt_BGcolour(BLACK);
 				Display.txt_FGcolour(colourvalue);
 				Display.gfx_MoveTo(110, 193);
 				sprintf(tempstring, " OFF ", colourvalue);
@@ -682,6 +799,39 @@ void loop() {
 			Display.putstr(tempstring);
 			break;
 		case 4: /// LED
+			Display.gfx_RectangleFilled(32, 40, 64, 72, 0xF800); //255		0		0	RED
+			Display.gfx_RectangleFilled(74, 40, 106, 72, 0x001F); //0		0		255	BLUE
+			Display.gfx_RectangleFilled(116, 40, 148, 72, 0x07E0); //0		255		0	GREEN
+			Display.gfx_RectangleFilled(158, 40, 190, 72, 0xFFE0); //255	255		0	YELLOW
+			Display.gfx_RectangleFilled(200, 40, 232, 72, 0x8010); //128	0		128 PURPLE
+			Display.gfx_RectangleFilled(242, 40, 274, 72, 0xFC00); //255	128		0	ORANGE
+			Display.gfx_RectangleFilled(24, 89, 281, 111, colourvalue);
+			Display.gfx_RectangleFilled(24, 119, 281, 141, colourvalue);
+			Display.gfx_RectangleFilled(24, 149, 281, 171, colourvalue);
+			Display.gfx_Slider(0, 25, 90, 280, 110, BLACK, 255, r_value);
+			Display.gfx_Slider(0, 25, 120, 280, 140, BLACK, 255, g_value);
+			Display.gfx_Slider(0, 25, 150, 280, 170, BLACK, 255, b_value);
+			Display.txt_Height(2);
+			Display.txt_Width(2);
+			Display.gfx_MoveTo(290, 89);
+			sprintf(tempstring, "R", colourvalue);
+			Display.putstr(tempstring);
+			Display.gfx_MoveTo(290, 119);
+			sprintf(tempstring, "G", colourvalue);
+			Display.putstr(tempstring);
+			Display.gfx_MoveTo(290, 149);
+			sprintf(tempstring, "B", colourvalue);
+			Display.putstr(tempstring);
+			Display.txt_Height(3);
+			Display.txt_Width(3);
+			Display.gfx_MoveTo(110, 193);
+			rgb_value = RGB2COLOR(r_value, g_value, b_value);
+			Display.txt_BGcolour(rgb_value);
+			Display.txt_FGcolour(BLACK);
+			sprintf(tempstring, " SET ", BLACK);
+			Display.putstr(tempstring);
+			Display.txt_FGcolour(colourvalue);
+			Display.txt_BGcolour(BLACK);
 			break;
 		case 5: /// AUDIO
 			Display.txt_Height(2);
@@ -700,7 +850,7 @@ void loop() {
 	if (draw == true) {
 		switch (menu_id) {
 		case 1: /// MAIN
-			/// Päänäkymän kellonaika
+				/// Päänäkymän kellonaika
 			draw_Time(hour, minute, second, 3, 66, 50);
 			draw_Day(day, 2, 31, 26);
 			/// Päänäkymän viisarit
@@ -759,27 +909,45 @@ void loop() {
 		if (alarm_hour_pressed || alarm_minute_pressed) {
 			alarm_hour_pressed = false;
 			alarm_minute_pressed = false;
-			Display.gfx_RectangleFilled(0, 97, 320, 120, 0x0000);
-			Display.gfx_RectangleFilled(0, 150, 320, 180, 0x0000);
+			Display.gfx_RectangleFilled(0, 97, 320, 120, BLACK);
+			Display.gfx_RectangleFilled(0, 150, 320, 180, BLACK);
 		}
+
 		if (change_hour_pressed || change_minute_pressed || change_second_pressed || change_day_pressed) {
 			change_hour_pressed = false;
 			change_minute_pressed = false;
 			change_second_pressed = false;
 			change_day_pressed = false;
-			Display.gfx_RectangleFilled(0, 94, 320, 120, 0x0000);
-			Display.gfx_RectangleFilled(0, 150, 320, 180, 0x0000);
-			Display.gfx_RectangleFilled(0, 55, 320, 68, 0x0000);
+			Display.gfx_RectangleFilled(0, 94, 320, 120, BLACK);
+			Display.gfx_RectangleFilled(0, 150, 320, 180, BLACK);
+			Display.gfx_RectangleFilled(0, 55, 320, 68, BLACK);
 		}
+
 		if (time_changed) {
 			time_changed = false;
 			Display.txt_Height(3);
 			Display.txt_Width(3);
-			Display.txt_BGcolour(0x0000);
+			Display.txt_BGcolour(BLACK);
 			Display.txt_FGcolour(colourvalue);
 			Display.gfx_MoveTo(110, 193);
-			sprintf(tempstring, " SET ", colourvalue);
+			sprintf(tempstring, " SET ", 0xFFE0);
 			Display.putstr(tempstring);
+		}
+
+		if (change_r_pressed) {
+			change_r_pressed = false;
+		}
+
+		if (change_g_pressed) {
+			change_g_pressed = false;
+		}
+
+		if (change_b_pressed) {
+			change_b_pressed = false;
+		}
+
+		if (preset_pressed) {
+			preset_pressed = false;
 		}
 	}
 
