@@ -58,6 +58,11 @@ int touch_X, touch_Y, old_touch_Y;
 int r_pos = 255, g_pos = 255, b_pos = 0, r_value = 255, g_value = 255, b_value = 0;
 unsigned short rgb_value;
 bool preset_pressed = false;
+int slider_touch;
+bool change_c_pressed = false;
+bool preview_pressed = false;
+char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav",
+						"alarm5.wav", "alarm6.wav", "alarm7.wav", "alarm8.wav" };
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -243,12 +248,48 @@ void getTouch() {
 				redraw_menu = true;
 			}
 		}
+		// PREVIEW napin äänen toisto ja painallus
+		if (menu_id == 5 && touch_X >= 100 && touch_Y >= 210 && touch_X <= 220 && touch_Y <= 240 && cnt == 25) {
+			
+			preview_pressed = !preview_pressed;
+			cnt = 0;
+			
 
-		if (menu_id == 4 && touch_X >= 34 && touch_Y >= 183 && touch_X <= 283 && touch_Y <= 199) {
-			//Display.gfx_Rectangle(34, 183, 283, 199, BLACK);
+			if (!preview_pressed) {
+
+				Display.txt_Height(2);
+				Display.txt_Width(2);
+				Display.txt_BGcolour(colourvalue);
+				Display.txt_FGcolour(BLACK);
+				Display.gfx_MoveTo(110, 210);
+				sprintf(tempstring, "PREVIEW", BLACK);
+				Display.putstr(tempstring);
+				Display.txt_BGcolour(BLACK);
+				Display.txt_FGcolour(colourvalue);
+
+				if (Display.snd_Playing() == 0) {
+
+					Display.file_PlayWAV(audio_library[1]);
 
 
+				}
+			}
+			if (preview_pressed) {
+				
+				Display.txt_Height(2);
+				Display.txt_Width(2);
+				Display.txt_BGcolour(BLACK);
+				Display.txt_FGcolour(colourvalue);
+				Display.gfx_MoveTo(110, 210);
+				sprintf(tempstring, "PREVIEW", colourvalue);
+				Display.putstr(tempstring);
+				Display.txt_BGcolour(colourvalue);
+				Display.txt_FGcolour(BLACK);
+				Display.snd_Stop();
+			}
+		
 		}
+		
 
 		if (menu_id == 2 && cnt == 25) {
 			if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
@@ -403,6 +444,12 @@ void getTouch() {
 		is_pressed = true;
 		change_b_pressed = true;
 	}
+	//sliderin piirtäminen 
+	if (menu_id == 5 && touch_X >= 34 && touch_Y >= 173 && touch_X <= 283 && touch_Y <= 189 && !is_pressed) {
+
+		is_pressed = true;
+		change_c_pressed = true;
+	}
 }
 
 /// Tuntiviisarien piirtäminen
@@ -520,10 +567,13 @@ ISR(TIMER1_OVF_vect)
 /// ********************** ///
 void loop() {
 
-	// ÄÄNEN TESTAUSTA VARTEN
-	if (Display.snd_Playing() == 0) {
+	
+	
+	//sliderin piirto
+	if (change_c_pressed) {
 
-		//Display.file_PlayWAV("alarm2.wav");
+		slider_touch = (touch_X - 34) / 1.97; 
+		Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
 	}
 
 	//Herätys ajan asetus
@@ -836,9 +886,63 @@ void loop() {
 		case 5: /// AUDIO
 			Display.txt_Height(2);
 			Display.txt_Width(2);
-			Display.gfx_MoveTo(110, 193);
+			Display.gfx_MoveTo(110, 210);
 			sprintf(tempstring, "PREVIEW", colourvalue);
 			Display.putstr(tempstring);
+			Display.txt_Height(1);
+			Display.txt_Width(1);
+			Display.gfx_MoveTo(120, 160);
+			sprintf(tempstring, "  VOLUME", colourvalue);
+			Display.putstr(tempstring);
+			Display.gfx_Rectangle(22, 53, 155, 71, colourvalue);
+			Display.gfx_Rectangle(22, 79, 155, 98, colourvalue);
+			Display.gfx_Rectangle(22, 105, 155, 123, colourvalue);
+			Display.gfx_Rectangle(22, 131, 155, 150, colourvalue);
+			Display.gfx_Rectangle(162, 53, 295, 71, colourvalue);
+			Display.gfx_Rectangle(162, 79, 295, 98, colourvalue);
+			Display.gfx_Rectangle(162, 105, 295, 123, colourvalue);
+			Display.gfx_Rectangle(162, 131, 295, 150, colourvalue);
+			Display.txt_Height(1);
+			Display.txt_Width(1);
+			Display.gfx_MoveTo(108, 35);
+			sprintf(tempstring, "AUDIO LIBRARY", colourvalue);
+			Display.putstr(tempstring);
+			Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
+			Display.gfx_Rectangle(33, 172, 285, 190, colourvalue);
+			
+			Display.gfx_MoveTo(28, 56);
+			sprintf(tempstring, audio_library[0], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(28, 82);
+			sprintf(tempstring, audio_library[1], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(28, 108);
+			sprintf(tempstring, audio_library[2], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(28, 134);
+			sprintf(tempstring, audio_library[3], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(168, 56);
+			sprintf(tempstring, audio_library[4], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(168, 82);
+			sprintf(tempstring, audio_library[5], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(168, 108);
+			sprintf(tempstring, audio_library[6], colourvalue);
+			Display.putstr(tempstring);
+			
+			Display.gfx_MoveTo(168, 134);
+			sprintf(tempstring, audio_library[7], colourvalue);
+			Display.putstr(tempstring);
+
+
 			break;
 		case 6: /// HIDDEN ALARM
 		default:
@@ -933,6 +1037,7 @@ void loop() {
 			sprintf(tempstring, " SET ", 0xFFE0);
 			Display.putstr(tempstring);
 		}
+		
 
 		if (change_r_pressed) {
 			change_r_pressed = false;
@@ -948,6 +1053,11 @@ void loop() {
 
 		if (preset_pressed) {
 			preset_pressed = false;
+		}
+
+		if (change_c_pressed) {
+			change_c_pressed = false;
+			Display.snd_Volume(slider_touch);
 		}
 	}
 
