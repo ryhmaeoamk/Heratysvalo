@@ -63,8 +63,9 @@ bool change_c_pressed = false;
 bool preview_pressed = false;
 char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav",
 						"alarm5.wav", "alarm6.wav", "alarm7.wav", "alarm8.wav" };
-char * oldselected_alarm = audio_library[1];
-char * newselected_alarm;
+int selected_alarm = 9;
+int saved_X = 0;
+int saved_Y = 0;
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -253,26 +254,38 @@ void getTouch() {
 		//Kappaleen valitseminen herätykselle
 		if (menu_id == 5) {
 			for (int a = 0; a <= 1; a++) {
-				for (int i = 0; i <= 3; i++) {
+				for (int i = 1; i <= 4; i++) {
 
 					
 
-					if (touch_X >= 22 + (a * 140) && touch_Y >= 53 + (i * 26) && touch_X <= 155 + (a * 140) && touch_Y <= 71 + (i * 26) && cnt == 25) {
+					if (touch_X >= 22 + (a * 140) && touch_Y >= 53 + ((i-1) * 26) && touch_X <= 155 + (a * 140) && touch_Y <= 71 + ((i - 1) * 26) && cnt == 25) {
 						cnt = 0;
-						newselected_alarm = audio_library[(a + 1)*(i + 1) - 1];
 						
-						Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), BLACK);
+						/*Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), BLACK);
 						Display.gfx_Rectangle(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), colourvalue);
 						Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
 						sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], colourvalue);
+						Display.putstr(tempstring);*/
 						
-						Display.putstr(tempstring);
-						if (oldselected_alarm != newselected_alarm) {
-							oldselected_alarm = newselected_alarm;
-							Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), colourvalue);
-							Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
-							sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], BLACK);
+						if (selected_alarm != ((a * 4)+ i)-1) {
+							selected_alarm = ((a * 4) + i) - 1;
+							Display.gfx_RectangleFilled(22 + (a * 140), 53 + ((i - 1) * 26), 155 + (a * 140), 71 + ((i - 1) * 26), colourvalue);
+							Display.txt_Height(1);
+							Display.txt_Width(1);
+							Display.gfx_MoveTo(28 + (a * 140), 56 + ((i - 1) * 26));
+							Display.txt_BGcolour(colourvalue);
+							Display.txt_FGcolour(BLACK);
+							sprintf(tempstring, audio_library[((a * 4) + i) - 1], BLACK);
 							Display.putstr(tempstring);
+							Display.txt_BGcolour(BLACK);
+							Display.txt_FGcolour(colourvalue);
+							Display.gfx_RectangleFilled(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), BLACK);
+							Display.gfx_Rectangle(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), colourvalue);
+							Display.gfx_MoveTo(28 + (saved_X * 140), 56 + (saved_Y * 26));
+							sprintf(tempstring, audio_library[(saved_X * 4) + saved_Y ], colourvalue);
+							Display.putstr(tempstring);
+							saved_X = a;
+							saved_Y = i - 1;
 						}
 
 					}
@@ -303,7 +316,7 @@ void getTouch() {
 
 				if (Display.snd_Playing() == 0) {
 
-					Display.file_PlayWAV(newselected_alarm);
+					Display.file_PlayWAV(audio_library[selected_alarm]);
 
 
 				}
@@ -928,11 +941,7 @@ void loop() {
 			Display.gfx_MoveTo(120, 160);
 			sprintf(tempstring, "  VOLUME", colourvalue);
 			Display.putstr(tempstring);
-			for (int a = 0; a <= 1; a++) {
-				for (int i = 0; i <= 3; i++) {
-					Display.gfx_Rectangle(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26),colourvalue);
-				}
-			}
+			
 
 			Display.txt_Height(1);
 			Display.txt_Width(1);
@@ -944,10 +953,28 @@ void loop() {
 			
 			if (menu_id == 5) {
 				for (int a = 0; a <= 1; a++) {
-					for (int i = 0; i <= 3; i++) {
-						Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
-						sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], colourvalue);
+					for (int i = 1; i <= 4; i++) {
+						
+						
+						Display.txt_Height(1);
+						Display.txt_Width(1);
+						Display.gfx_MoveTo(28 + (a * 140), 56 + ((i - 1) * 26));
+						Display.txt_BGcolour(BLACK);
+						Display.txt_FGcolour(colourvalue);
+						Display.gfx_Rectangle(22 + (a * 140), 53 + ((i - 1) * 26), 155 + (a * 140), 71 + ((i - 1) * 26), colourvalue);
+						sprintf(tempstring, audio_library[((a * 4) + i) - 1], colourvalue);
 						Display.putstr(tempstring);
+						if (saved_X <= 6 && saved_Y <= 6) {
+							Display.txt_Height(1);
+							Display.txt_Width(1);
+							Display.txt_BGcolour(colourvalue);
+							Display.txt_FGcolour(BLACK);
+							Display.gfx_RectangleFilled(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), colourvalue);
+							
+							Display.gfx_MoveTo(28 + (saved_X * 140), 56 + (saved_Y * 26));
+							sprintf(tempstring, audio_library[saved_X * 4 + saved_Y], colourvalue);
+							Display.putstr(tempstring);
+						}
 					}
 				}
 			}
