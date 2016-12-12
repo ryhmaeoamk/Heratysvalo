@@ -63,6 +63,8 @@ bool change_c_pressed = false;
 bool preview_pressed = false;
 char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav",
 						"alarm5.wav", "alarm6.wav", "alarm7.wav", "alarm8.wav" };
+char * oldselected_alarm = audio_library[1];
+char * newselected_alarm;
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -248,6 +250,38 @@ void getTouch() {
 				redraw_menu = true;
 			}
 		}
+		//Kappaleen valitseminen herätykselle
+		if (menu_id == 5) {
+			for (int a = 0; a <= 1; a++) {
+				for (int i = 0; i <= 3; i++) {
+
+					
+
+					if (touch_X >= 22 + (a * 140) && touch_Y >= 53 + (i * 26) && touch_X <= 155 + (a * 140) && touch_Y <= 71 + (i * 26) && cnt == 25) {
+						cnt = 0;
+						newselected_alarm = audio_library[(a + 1)*(i + 1) - 1];
+						
+						Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), BLACK);
+						Display.gfx_Rectangle(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), colourvalue);
+						Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
+						sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], colourvalue);
+						
+						Display.putstr(tempstring);
+						if (oldselected_alarm != newselected_alarm) {
+							oldselected_alarm = newselected_alarm;
+							Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), colourvalue);
+							Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
+							sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], BLACK);
+							Display.putstr(tempstring);
+						}
+
+					}
+				}
+			}
+		}
+
+
+		
 		// PREVIEW napin äänen toisto ja painallus
 		if (menu_id == 5 && touch_X >= 100 && touch_Y >= 210 && touch_X <= 220 && touch_Y <= 240 && cnt == 25) {
 			
@@ -269,7 +303,7 @@ void getTouch() {
 
 				if (Display.snd_Playing() == 0) {
 
-					Display.file_PlayWAV(audio_library[1]);
+					Display.file_PlayWAV(newselected_alarm);
 
 
 				}
@@ -894,14 +928,12 @@ void loop() {
 			Display.gfx_MoveTo(120, 160);
 			sprintf(tempstring, "  VOLUME", colourvalue);
 			Display.putstr(tempstring);
-			Display.gfx_Rectangle(22, 53, 155, 71, colourvalue);
-			Display.gfx_Rectangle(22, 79, 155, 98, colourvalue);
-			Display.gfx_Rectangle(22, 105, 155, 123, colourvalue);
-			Display.gfx_Rectangle(22, 131, 155, 150, colourvalue);
-			Display.gfx_Rectangle(162, 53, 295, 71, colourvalue);
-			Display.gfx_Rectangle(162, 79, 295, 98, colourvalue);
-			Display.gfx_Rectangle(162, 105, 295, 123, colourvalue);
-			Display.gfx_Rectangle(162, 131, 295, 150, colourvalue);
+			for (int a = 0; a <= 1; a++) {
+				for (int i = 0; i <= 3; i++) {
+					Display.gfx_Rectangle(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26),colourvalue);
+				}
+			}
+
 			Display.txt_Height(1);
 			Display.txt_Width(1);
 			Display.gfx_MoveTo(108, 35);
@@ -910,38 +942,15 @@ void loop() {
 			Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
 			Display.gfx_Rectangle(33, 172, 285, 190, colourvalue);
 			
-			Display.gfx_MoveTo(28, 56);
-			sprintf(tempstring, audio_library[0], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(28, 82);
-			sprintf(tempstring, audio_library[1], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(28, 108);
-			sprintf(tempstring, audio_library[2], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(28, 134);
-			sprintf(tempstring, audio_library[3], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(168, 56);
-			sprintf(tempstring, audio_library[4], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(168, 82);
-			sprintf(tempstring, audio_library[5], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(168, 108);
-			sprintf(tempstring, audio_library[6], colourvalue);
-			Display.putstr(tempstring);
-			
-			Display.gfx_MoveTo(168, 134);
-			sprintf(tempstring, audio_library[7], colourvalue);
-			Display.putstr(tempstring);
-
+			if (menu_id == 5) {
+				for (int a = 0; a <= 1; a++) {
+					for (int i = 0; i <= 3; i++) {
+						Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
+						sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], colourvalue);
+						Display.putstr(tempstring);
+					}
+				}
+			}
 
 			break;
 		case 6: /// HIDDEN ALARM
