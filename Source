@@ -58,7 +58,7 @@ int touch_X, touch_Y, old_touch_Y;
 int r_pos = 255, g_pos = 255, b_pos = 0, r_value = 255, g_value = 255, b_value = 0;
 unsigned short rgb_value;
 bool preset_pressed = false;
-int slider_touch;
+int slider_touch = 62;
 bool change_c_pressed = false;
 bool preview_pressed = false;
 char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav",
@@ -286,6 +286,7 @@ void getTouch() {
 							Display.putstr(tempstring);
 							saved_X = a;
 							saved_Y = i - 1;
+							
 						}
 
 					}
@@ -330,8 +331,6 @@ void getTouch() {
 				Display.gfx_MoveTo(110, 210);
 				sprintf(tempstring, "PREVIEW", colourvalue);
 				Display.putstr(tempstring);
-				Display.txt_BGcolour(colourvalue);
-				Display.txt_FGcolour(BLACK);
 				Display.snd_Stop();
 			}
 		
@@ -974,6 +973,8 @@ void loop() {
 							Display.gfx_MoveTo(28 + (saved_X * 140), 56 + (saved_Y * 26));
 							sprintf(tempstring, audio_library[saved_X * 4 + saved_Y], colourvalue);
 							Display.putstr(tempstring);
+							Display.txt_BGcolour(BLACK);
+							Display.txt_FGcolour(colourvalue);
 						}
 					}
 				}
