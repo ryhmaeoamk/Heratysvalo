@@ -661,6 +661,9 @@ void loop() {
 			Display.file_PlayWAV(audio_library[selected_alarm]);
 		}
 	}
+	if (preview_pressed && menu_id != currentMenu) {
+		Display.snd_Stop();
+	}
 	
 	//sliderin piirto
 	if (volume_pressed) {
@@ -860,21 +863,42 @@ void loop() {
 	}
 
 	if (change_r_pressed) {
-		r_pos = touch_X - 25;
+		if ((r_pos + g_pos + b_pos) < 100) {
+			if ((touch_X - 25) > r_pos) {
+				r_pos = touch_X - 25;
+			}
+		}
+		else {
+			r_pos = touch_X - 25;
+		}
 		if (r_pos < 0) r_pos = 0;
 		if (r_pos > 255) r_pos = 255;
 		Display.gfx_Slider(0, 25, 90, 280, 110, BLACK, 255, r_pos);
 	}
 
 	if (change_g_pressed) {
-		g_pos = touch_X - 25;
+		if ((r_pos + g_pos + b_pos) < 100) {
+			if ((touch_X - 25) > g_pos) {
+				g_pos = touch_X - 25;
+			}
+		}
+		else {
+			g_pos = touch_X - 25;
+		}
 		if (g_pos < 0) g_pos = 0;
 		if (g_pos > 255) g_pos = 255;
 		Display.gfx_Slider(0, 25, 120, 280, 140, BLACK, 255, g_pos);
 	}
 
 	if (change_b_pressed) {
-		b_pos = touch_X - 25;
+		if ((r_pos + g_pos + b_pos) < 100) {
+			if ((touch_X - 25) > b_pos) {
+				b_pos = touch_X - 25;
+			}
+		}
+		else {
+			b_pos = touch_X - 25;
+		}
 		if (b_pos < 0) b_pos = 0;
 		if (b_pos > 255) b_pos = 255;
 		Display.gfx_Slider(0, 25, 150, 280, 170, BLACK, 255, b_pos);
@@ -1146,6 +1170,7 @@ void loop() {
 
 		if (time_changed) {
 			time_changed = false;
+			if (menu_id == 2) {
 			Display.txt_Height(3);
 			Display.txt_Width(3);
 			Display.txt_BGcolour(BLACK);
@@ -1153,6 +1178,7 @@ void loop() {
 			Display.gfx_MoveTo(110, 193);
 			sprintf(tempstring, " SET ", 0xFFE0);
 			Display.putstr(tempstring);
+			}
 		}
 		
 
