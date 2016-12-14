@@ -24,7 +24,7 @@ float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, pr
 /// Hälytyksen muuttujat
 int alarm_hour = 0;
 int alarm_minute = 0;
-bool alarm = false;
+bool alarm = true;
 /// Muita muuttujia
 int canpress = 2;
 int update_inverval = 0;
@@ -62,12 +62,16 @@ int slider_touch = 62;
 bool volume_pressed = false;
 bool preview_pressed = false;
 char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav",
-						"alarm5.wav", "alarm6.wav", "alarm7.wav", "alarm8.wav" };
+"alarm5.wav", "alarm6.wav", "alarm7.wav", "alarm8.wav" };
 int selected_alarm = 0;
 int saved_X = 0;
 int saved_Y = 0;
 bool play_alarm = false;
 int snooze_counter = 0;
+float pwm_target[3];
+float pwm_current[3];
+int seconds_total;
+int seconds_alarm_total;
 
 
 /*
@@ -245,26 +249,18 @@ void getTouch() {
 	touch_Y = Display.touch_Get(TOUCH_GETY);
 	// Torkun asetus
 	if (menu_id == 6 && touch_X >= 113 && touch_Y >= 88 && touch_X <= 217 && touch_Y <= 192 && cnt == 25) {
-		
-		snooze_counter++;
+
+		seconds_alarm_total += 900;
+
 		cnt = 0;
-		if (snooze_counter % 4) {
-			
-			alarm_minute = alarm_minute + 15;
-		}
-		else {
-			
-			alarm_minute = 0;
-			alarm_hour++;
-		}
-		
+
 		menu_id = 1;
 		play_alarm = false;
 		redraw_menu = true;
 		Display.snd_Stop();
 
-	
-		
+
+
 	}
 	// Hälytyksen sammutus
 	if (menu_id == 6 && touch_X >= 100 && touch_Y >= 210 && touch_X <= 220 && touch_Y <= 240 && cnt == 25) {
@@ -272,11 +268,10 @@ void getTouch() {
 		alarm = false;
 		menu_id = 1;
 		play_alarm = false;
-		snooze_counter = 0;
 		redraw_menu = true;
 		Display.snd_Stop();
-			
-		
+
+
 	}
 	// Valikon vaihtaminen
 	if (!is_pressed) {
@@ -293,18 +288,18 @@ void getTouch() {
 			for (int a = 0; a <= 1; a++) {
 				for (int i = 1; i <= 4; i++) {
 
-					
 
-					if (touch_X >= 22 + (a * 140) && touch_Y >= 53 + ((i-1) * 26) && touch_X <= 155 + (a * 140) && touch_Y <= 71 + ((i - 1) * 26) && cnt == 25) {
+
+					if (touch_X >= 22 + (a * 140) && touch_Y >= 53 + ((i - 1) * 26) && touch_X <= 155 + (a * 140) && touch_Y <= 71 + ((i - 1) * 26) && cnt == 25) {
 						cnt = 0;
-						
+
 						/*Display.gfx_RectangleFilled(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), BLACK);
 						Display.gfx_Rectangle(22 + (a * 140), 53 + (i * 26), 155 + (a * 140), 71 + (i * 26), colourvalue);
 						Display.gfx_MoveTo(28 + (a * 140), 56 + (i * 26));
 						sprintf(tempstring, audio_library[((a + 1)*(i + 1) - 1)], colourvalue);
 						Display.putstr(tempstring);*/
-						
-						if (selected_alarm != ((a * 4)+ i)-1) {
+
+						if (selected_alarm != ((a * 4) + i) - 1) {
 							selected_alarm = ((a * 4) + i) - 1;
 							Display.gfx_RectangleFilled(22 + (a * 140), 53 + ((i - 1) * 26), 155 + (a * 140), 71 + ((i - 1) * 26), colourvalue);
 							Display.txt_Height(1);
@@ -319,11 +314,11 @@ void getTouch() {
 							Display.gfx_RectangleFilled(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), BLACK);
 							Display.gfx_Rectangle(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), colourvalue);
 							Display.gfx_MoveTo(28 + (saved_X * 140), 56 + (saved_Y * 26));
-							sprintf(tempstring, audio_library[(saved_X * 4) + saved_Y ], colourvalue);
+							sprintf(tempstring, audio_library[(saved_X * 4) + saved_Y], colourvalue);
 							Display.putstr(tempstring);
 							saved_X = a;
 							saved_Y = i - 1;
-							
+
 						}
 
 					}
@@ -332,13 +327,13 @@ void getTouch() {
 		}
 
 
-		
+
 		// PREVIEW napin äänen toisto ja painallus
 		if (menu_id == 5 && touch_X >= 100 && touch_Y >= 210 && touch_X <= 220 && touch_Y <= 240 && cnt == 25) {
-			
+
 			preview_pressed = !preview_pressed;
 			cnt = 0;
-			
+
 
 			if (preview_pressed) {
 
@@ -356,10 +351,10 @@ void getTouch() {
 
 					Display.file_PlayWAV(audio_library[selected_alarm]);
 				}
-					
+
 			}
 			if (!preview_pressed) {
-				
+
 				Display.txt_Height(2);
 				Display.txt_Width(2);
 				Display.txt_BGcolour(BLACK);
@@ -369,9 +364,9 @@ void getTouch() {
 				Display.putstr(tempstring);
 				Display.snd_Stop();
 			}
-		
+
 		}
-		
+
 
 		if (menu_id == 2 && cnt == 25) {
 			if (touch_X >= 103 && touch_Y >= 186 && touch_X <= 217 && touch_Y <= 226) {
@@ -567,6 +562,11 @@ void drawHoursHand(float hours)
 
 // SETUP
 void setup() {
+	// RGB PWM PINNIT
+	pinMode(3, OUTPUT); // R
+	pinMode(5, OUTPUT); // G
+	pinMode(6, OUTPUT); // B
+
 	///Ajastimen määritykset
 	noInterrupts();           // disable all interrupts
 	TCCR1A = 0;
@@ -648,14 +648,15 @@ ISR(TIMER1_OVF_vect)
 //		  PÄÄLOOPPI         //
 /// ********************** ///
 void loop() {
+
 	// hälytyksen tapahtuessa toistettavat asitat
-	if (alarm && alarm_hour == hour && alarm_minute == minute) {
+	if (seconds_alarm_total == seconds_total && alarm) {
 		menu_id = 6;
 		redraw_menu = true;
 		play_alarm = true;
 	}
 	if (play_alarm == true) {
-		
+
 		if (Display.snd_Playing() == 0 && cnt == 25) {
 			cnt = 0;
 			Display.file_PlayWAV(audio_library[selected_alarm]);
@@ -664,11 +665,11 @@ void loop() {
 	if (preview_pressed && menu_id != currentMenu) {
 		Display.snd_Stop();
 	}
-	
+
 	//sliderin piirto
 	if (volume_pressed) {
 
-		slider_touch = (touch_X - 34) / 1.97; 
+		slider_touch = (touch_X - 34) / 1.97;
 		Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
 	}
 	//PREVIEW napin palauttaminen normaaliksi toiston jälkeen
@@ -1024,7 +1025,7 @@ void loop() {
 			Display.gfx_MoveTo(120, 160);
 			sprintf(tempstring, "  VOLUME", colourvalue);
 			Display.putstr(tempstring);
-			
+
 
 			Display.txt_Height(1);
 			Display.txt_Width(1);
@@ -1033,12 +1034,12 @@ void loop() {
 			Display.putstr(tempstring);
 			Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
 			Display.gfx_Rectangle(33, 172, 285, 190, colourvalue);
-			
+
 			if (menu_id == 5) {
 				for (int a = 0; a <= 1; a++) {
 					for (int i = 1; i <= 4; i++) {
-						
-						
+
+
 						Display.txt_Height(1);
 						Display.txt_Width(1);
 						Display.gfx_MoveTo(28 + (a * 140), 56 + ((i - 1) * 26));
@@ -1053,7 +1054,7 @@ void loop() {
 							Display.txt_BGcolour(colourvalue);
 							Display.txt_FGcolour(BLACK);
 							Display.gfx_RectangleFilled(22 + (saved_X * 140), 53 + (saved_Y * 26), 155 + (saved_X * 140), 71 + (saved_Y * 26), colourvalue);
-							
+
 							Display.gfx_MoveTo(28 + (saved_X * 140), 56 + (saved_Y * 26));
 							sprintf(tempstring, audio_library[saved_X * 4 + saved_Y], colourvalue);
 							Display.putstr(tempstring);
@@ -1091,6 +1092,24 @@ void loop() {
 
 	// Tämä piirto tapahtuu joka sekuntti!
 	if (draw == true) {
+
+		// Herätysajan sekuntien päivitys ja kellon sekuntien päivitys
+		seconds_alarm_total = (alarm_hour * 3600) + (alarm_minute * 60);
+		seconds_total = (hour * 3600) + (minute * 60) + second;
+
+		//PWM kasvatus jos herätys on päällä
+		if (alarm == true) {
+			if (pwm_current[0] < pwm_target[0]) { pwm_current[0] += (pwm_target[0] * 0.000555555); }
+			else pwm_current[0] = pwm_target[0];
+			if (pwm_current[1] < pwm_target[1]) { pwm_current[1] += (pwm_target[1] * 0.000555555); }
+			else pwm_current[1] = pwm_target[1];
+			if (pwm_current[2] < pwm_target[2]) { pwm_current[2] += (pwm_target[2] * 0.000555555); }
+			else pwm_current[2] = pwm_target[2];
+		}
+		analogWrite(3, (int)pwm_current[0]); // R
+		analogWrite(5, (int)pwm_current[1]); // G
+		analogWrite(6, (int)pwm_current[2]); // B
+
 		switch (menu_id) {
 		case 1: /// MAIN
 				/// Päänäkymän kellonaika
@@ -1171,16 +1190,16 @@ void loop() {
 		if (time_changed) {
 			time_changed = false;
 			if (menu_id == 2) {
-			Display.txt_Height(3);
-			Display.txt_Width(3);
-			Display.txt_BGcolour(BLACK);
-			Display.txt_FGcolour(colourvalue);
-			Display.gfx_MoveTo(110, 193);
-			sprintf(tempstring, " SET ", 0xFFE0);
-			Display.putstr(tempstring);
+				Display.txt_Height(3);
+				Display.txt_Width(3);
+				Display.txt_BGcolour(BLACK);
+				Display.txt_FGcolour(colourvalue);
+				Display.gfx_MoveTo(110, 193);
+				sprintf(tempstring, " SET ", 0xFFE0);
+				Display.putstr(tempstring);
 			}
 		}
-		
+
 
 		if (change_r_pressed) {
 			change_r_pressed = false;
