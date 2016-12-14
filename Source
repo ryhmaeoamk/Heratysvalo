@@ -66,6 +66,9 @@ char * audio_library[8]{ "alarm1.wav" , "alarm2.wav", "alarm3.wav", "alarm4.wav"
 int selected_alarm = 0;
 int saved_X = 0;
 int saved_Y = 0;
+bool play_alarm = false;
+int snooze_counter = 0;
+
 
 /*
 int mainButton_x1 = 1, mainButton_x2 = 62;
@@ -240,7 +243,41 @@ void drawMinutesHand(int minutes)
 void getTouch() {
 	touch_X = Display.touch_Get(TOUCH_GETX);
 	touch_Y = Display.touch_Get(TOUCH_GETY);
+	// Torkun asetus
+	if (menu_id == 6 && touch_X >= 113 && touch_Y >= 88 && touch_X <= 217 && touch_Y <= 192 && cnt == 25) {
+		
+		snooze_counter++;
+		cnt = 0;
+		if (snooze_counter % 4) {
+			
+			alarm_minute = alarm_minute + 15;
+		}
+		else {
+			
+			alarm_minute = 0;
+			alarm_hour++;
+		}
+		
+		menu_id = 1;
+		play_alarm = false;
+		redraw_menu = true;
+		Display.snd_Stop();
 
+	
+		
+	}
+	// Hälytyksen sammutus
+	if (menu_id == 6 && touch_X >= 100 && touch_Y >= 210 && touch_X <= 220 && touch_Y <= 240 && cnt == 25) {
+		cnt = 0;
+		alarm = false;
+		menu_id = 1;
+		play_alarm = false;
+		snooze_counter = 0;
+		redraw_menu = true;
+		Display.snd_Stop();
+			
+		
+	}
 	// Valikon vaihtaminen
 	if (!is_pressed) {
 		for (int menuCounter = 0; menuCounter < 5; menuCounter++)
@@ -611,8 +648,19 @@ ISR(TIMER1_OVF_vect)
 //		  PÄÄLOOPPI         //
 /// ********************** ///
 void loop() {
-
-	
+	// hälytyksen tapahtuessa toistettavat asitat
+	if (alarm && alarm_hour == hour && alarm_minute == minute) {
+		menu_id = 6;
+		redraw_menu = true;
+		play_alarm = true;
+	}
+	if (play_alarm == true) {
+		
+		if (Display.snd_Playing() == 0 && cnt == 25) {
+			cnt = 0;
+			Display.file_PlayWAV(audio_library[selected_alarm]);
+		}
+	}
 	
 	//sliderin piirto
 	if (volume_pressed) {
@@ -620,7 +668,7 @@ void loop() {
 		slider_touch = (touch_X - 34) / 1.97; 
 		Display.gfx_Slider(0, 34, 173, 284, 189, BLACK, 127, slider_touch);
 	}
-	
+	//PREVIEW napin palauttaminen normaaliksi toiston jälkeen
 	if (menu_id == 5 && Display.snd_Playing() == 0 && preview_pressed && cnt == 25) {
 
 		preview_pressed = false;
@@ -994,6 +1042,24 @@ void loop() {
 
 			break;
 		case 6: /// HIDDEN ALARM
+			Display.gfx_Circle(165, 140, 52, colourvalue);
+			//Display.gfx_Rectangle(78, 105, 235, 185, colourvalue);
+			Display.txt_Height(2);
+			Display.txt_Width(2);
+			Display.gfx_MoveTo(93, 205);
+			sprintf(tempstring, "ALARM OFF", colourvalue);
+			Display.putstr(tempstring);
+			Display.txt_Height(1);
+			Display.txt_Width(1);
+			Display.gfx_MoveTo(117, 125);
+			sprintf(tempstring, "   SNOOZE", colourvalue);
+			Display.putstr(tempstring);
+			Display.txt_Height(1);
+			Display.txt_Width(1);
+			Display.gfx_MoveTo(117, 145);
+			sprintf(tempstring, "   15 MIN", colourvalue);
+			Display.putstr(tempstring);
+			break;
 		default:
 			break;
 		}
@@ -1024,6 +1090,8 @@ void loop() {
 		case 5: /// AUDIO
 			break;
 		case 6: /// HIDDEN ALARM
+			draw_Time(hour, minute, second, 3, 66, 50);
+			draw_Day(day, 2, 31, 26);
 			break;
 		default: break;
 		}
