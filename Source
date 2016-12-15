@@ -1099,20 +1099,27 @@ void loop() {
 		//PWM kasvatus
 		if ((alarm == true && (seconds_alarm_total - seconds_total) >= 0 && (seconds_alarm_total - seconds_total) < 1800) || play_alarm) {
 			//if ((int)pwm_current[0] < r_value) {
-			pwm_r = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*r_value;
+			//pwm_r = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*r_value;
+			int pwm_temp = 1800 - (seconds_alarm_total - seconds_total);
+			pwm_r = ((float)pwm_temp / 1800)*(float)r_value;
+			//pwm_r = 255;
 			//if (pwm_current[0] >= r_value) { pwm_current[0] = r_value; }
 			//if ((int)pwm_current[1] < g_value) {
-			pwm_g = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*g_value;
+			//pwm_g = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*g_value;
+			pwm_g = ((float)pwm_temp / 1800)*(float)g_value;
+			//pwm_g = 255;
 			//if (pwm_current[1] >= g_value) { pwm_current[1] = g_value; }
 			//if ((int)pwm_current[2] < b_value) {
-			pwm_b = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*b_value;
+			//pwm_b = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*b_value;
+			pwm_b = ((float)pwm_temp / 1800)*(float)b_value;
+			//pwm_b = 0;
 			//if (pwm_current[2] >= b_value) { pwm_current[2] = b_value; }
 			Display.txt_Height(1);
 			Display.txt_Width(1);
 			Display.txt_BGcolour(BLACK);
 			Display.txt_FGcolour(colourvalue);
 			Display.gfx_MoveTo(10, 160);
-			sprintf(tempstring, "PWM_R: %04d PWM_G: %04d PWM_B: %04d", pwm_r, pwm_g, pwm_b);
+			sprintf(tempstring, "PWM_R: %i PWM_G: %i PWM_B: %i", (int)pwm_r, (int)pwm_g, (int)pwm_b);
 			Display.putstr(tempstring);
 			Display.gfx_MoveTo(10, 180);
 			sprintf(tempstring, "R: %i G: %i B: %i", r_value, g_value, b_value);
@@ -1128,9 +1135,9 @@ void loop() {
 			analogWrite(6, 0); // B
 		}
 		else {
-			analogWrite(3, pwm_r); // R
-			analogWrite(5, pwm_g); // G
-			analogWrite(6, pwm_b); // B
+			analogWrite(3, (int)pwm_r); // R
+			analogWrite(5, (int)pwm_g); // G
+			analogWrite(6, (int)pwm_b); // B
 		}
 
 
