@@ -68,7 +68,7 @@ int saved_X = 0;
 int saved_Y = 0;
 bool play_alarm = false;
 int snooze_counter = 0;
-float pwm_current[3];
+float pwm_r = 255, pwm_g = 255, pwm_b = 0;
 int seconds_total;
 int seconds_alarm_total;
 
@@ -1096,14 +1096,30 @@ void loop() {
 		seconds_alarm_total = (alarm_hour * 3600) + (alarm_minute * 60);
 		seconds_total = (hour * 3600) + (minute * 60) + second;
 
-		//PWM kasvatus jos herätys on päällä
+		//PWM kasvatus
 		if ((alarm == true && (seconds_alarm_total - seconds_total) >= 0 && (seconds_alarm_total - seconds_total) < 1800) || play_alarm) {
-			if (pwm_current[0] < r_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*r_value; }
+			//if ((int)pwm_current[0] < r_value) {
+			pwm_r = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*r_value;
 			//if (pwm_current[0] >= r_value) { pwm_current[0] = r_value; }
-			if (pwm_current[1] < g_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*g_value; }
+			//if ((int)pwm_current[1] < g_value) {
+			pwm_g = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*g_value;
 			//if (pwm_current[1] >= g_value) { pwm_current[1] = g_value; }
-			if (pwm_current[2] < b_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*b_value; }
+			//if ((int)pwm_current[2] < b_value) {
+			pwm_b = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*b_value;
 			//if (pwm_current[2] >= b_value) { pwm_current[2] = b_value; }
+			Display.txt_Height(1);
+			Display.txt_Width(1);
+			Display.txt_BGcolour(BLACK);
+			Display.txt_FGcolour(colourvalue);
+			Display.gfx_MoveTo(10, 160);
+			sprintf(tempstring, "PWM_R: %04d PWM_G: %04d PWM_B: %04d", pwm_r, pwm_g, pwm_b);
+			Display.putstr(tempstring);
+			Display.gfx_MoveTo(10, 180);
+			sprintf(tempstring, "R: %i G: %i B: %i", r_value, g_value, b_value);
+			Display.putstr(tempstring);
+			Display.gfx_MoveTo(10, 200);
+			sprintf(tempstring, "seconds_total: %i\nseconds_alarm_total: %i", seconds_total, seconds_alarm_total);
+			Display.putstr(tempstring);
 		}
 
 		if (alarm == false && menu_id != 4) {
@@ -1112,9 +1128,9 @@ void loop() {
 			analogWrite(6, 0); // B
 		}
 		else {
-			analogWrite(3, (int)pwm_current[0]); // R
-			analogWrite(5, (int)pwm_current[1]); // G
-			analogWrite(6, (int)pwm_current[2]); // B
+			analogWrite(3, pwm_r); // R
+			analogWrite(5, pwm_g); // G
+			analogWrite(6, pwm_b); // B
 		}
 
 
@@ -1137,9 +1153,9 @@ void loop() {
 				//draw_Day(new_day, 31, 97);
 			break;
 		case 4: /// LED
-			pwm_current[0] = r_value;
-			pwm_current[1] = g_value;
-			pwm_current[2] = b_value;
+			pwm_r = r_value;
+			pwm_g = g_value;
+			pwm_b = b_value;
 			break;
 		case 5: /// AUDIO
 			break;
