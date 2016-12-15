@@ -14,17 +14,17 @@ int select = 1;
 int menu_id = 1, currentMenu = 1;
 /// Ajan muuttujat
 int timer1_counter;
-unsigned int day = 6;
-unsigned int hour = 23;
-unsigned int minute = 59;
+unsigned int day = 0;
+unsigned int hour = 0;
+unsigned int minute = 0;
 unsigned int second = 0;
 char * paiva;
 int preSeconds, preMinutes, preHours;
 float preSecondsX = 0, preSecondsY = 100, preMinutesX = 0, preMinutesY = 100, preHoursX = 0, preHoursY = 100;
 /// Hälytyksen muuttujat
 int alarm_hour = 0;
-int alarm_minute = 0;
-bool alarm = true;
+int alarm_minute = 30;
+bool alarm;
 /// Muita muuttujia
 int canpress = 2;
 int update_inverval = 0;
@@ -68,7 +68,7 @@ int saved_X = 0;
 int saved_Y = 0;
 bool play_alarm = false;
 int snooze_counter = 0;
-float pwm_target[3];
+float pwm_target[3] = { (int)r_value, (int)g_value, (int)b_value };
 float pwm_current[3];
 int seconds_total;
 int seconds_alarm_total;
@@ -1097,18 +1097,31 @@ void loop() {
 		seconds_alarm_total = (alarm_hour * 3600) + (alarm_minute * 60);
 		seconds_total = (hour * 3600) + (minute * 60) + second;
 
+		pwm_target[0] = (int)r_value;
+		pwm_target[1] = (int)g_value;
+		pwm_target[2] = (int)b_value;
+
 		//PWM kasvatus jos herätys on päällä
-		if (alarm == true) {
-			if (pwm_current[0] < pwm_target[0]) { pwm_current[0] += (pwm_target[0] * 0.000555555); }
-			else pwm_current[0] = pwm_target[0];
-			if (pwm_current[1] < pwm_target[1]) { pwm_current[1] += (pwm_target[1] * 0.000555555); }
-			else pwm_current[1] = pwm_target[1];
-			if (pwm_current[2] < pwm_target[2]) { pwm_current[2] += (pwm_target[2] * 0.000555555); }
-			else pwm_current[2] = pwm_target[2];
+		if (alarm == true && seconds_total>=seconds_alarm_total-1800) {
+			if (pwm_current[0] < pwm_target[0]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[0]; }
+			//if (pwm_current[0] >= pwm_target[0]) { pwm_current[0] = pwm_target[0]; }
+			if (pwm_current[1] < pwm_target[1]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[1]; }
+			//if (pwm_current[1] >= pwm_target[1]) { pwm_current[1] = pwm_target[1]; }
+			if (pwm_current[2] < pwm_target[2]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[2]; }
+			//if (pwm_current[2] >= pwm_target[2]) { pwm_current[2] = pwm_target[2]; }
 		}
-		analogWrite(3, (int)pwm_current[0]); // R
-		analogWrite(5, (int)pwm_current[1]); // G
-		analogWrite(6, (int)pwm_current[2]); // B
+
+		if (alarm == false && menu_id != 4) {
+			analogWrite(3, 0); // R
+			analogWrite(5, 0); // G
+			analogWrite(6, 0); // B
+		}
+		else {
+			analogWrite(3, (int)pwm_current[0]); // R
+			analogWrite(5, (int)pwm_current[1]); // G
+			analogWrite(6, (int)pwm_current[2]); // B
+		}
+
 
 		switch (menu_id) {
 		case 1: /// MAIN
@@ -1129,6 +1142,9 @@ void loop() {
 				//draw_Day(new_day, 31, 97);
 			break;
 		case 4: /// LED
+			pwm_current[0] = pwm_target[0];
+			pwm_current[1] = pwm_target[1];
+			pwm_current[2] = pwm_target[2];
 			break;
 		case 5: /// AUDIO
 			break;
@@ -1189,7 +1205,7 @@ void loop() {
 
 		if (time_changed) {
 			time_changed = false;
-			if (menu_id == 2) {
+			if (menu_id == 3) {
 				Display.txt_Height(3);
 				Display.txt_Width(3);
 				Display.txt_BGcolour(BLACK);
