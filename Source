@@ -68,7 +68,6 @@ int saved_X = 0;
 int saved_Y = 0;
 bool play_alarm = false;
 int snooze_counter = 0;
-float pwm_target[3] = { (int)r_value, (int)g_value, (int)b_value };
 float pwm_current[3];
 int seconds_total;
 int seconds_alarm_total;
@@ -278,7 +277,7 @@ void getTouch() {
 		for (int menuCounter = 0; menuCounter < 5; menuCounter++)
 		{
 			if (touch_X >= buttonCoord[menuCounter][0] && touch_X <= buttonCoord[menuCounter][1]
-				&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16) {
+				&& touch_Y >= button_y1 - 1 && touch_Y <= button_y2 + 16 && menu_id != 6) {
 				menu_id = menuCounter + 1;
 				redraw_menu = true;
 			}
@@ -567,7 +566,7 @@ void setup() {
 	pinMode(5, OUTPUT); // G
 	pinMode(6, OUTPUT); // B
 
-	///Ajastimen määritykset
+						///Ajastimen määritykset
 	noInterrupts();           // disable all interrupts
 	TCCR1A = 0;
 	TCCR1B = 0;
@@ -1097,18 +1096,14 @@ void loop() {
 		seconds_alarm_total = (alarm_hour * 3600) + (alarm_minute * 60);
 		seconds_total = (hour * 3600) + (minute * 60) + second;
 
-		pwm_target[0] = (int)r_value;
-		pwm_target[1] = (int)g_value;
-		pwm_target[2] = (int)b_value;
-
 		//PWM kasvatus jos herätys on päällä
-		if (alarm == true && seconds_total>=seconds_alarm_total-1800) {
-			if (pwm_current[0] < pwm_target[0]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[0]; }
-			//if (pwm_current[0] >= pwm_target[0]) { pwm_current[0] = pwm_target[0]; }
-			if (pwm_current[1] < pwm_target[1]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[1]; }
-			//if (pwm_current[1] >= pwm_target[1]) { pwm_current[1] = pwm_target[1]; }
-			if (pwm_current[2] < pwm_target[2]) { pwm_current[0] = ((seconds_total - (seconds_alarm_total-1800)) / 1800)*pwm_target[2]; }
-			//if (pwm_current[2] >= pwm_target[2]) { pwm_current[2] = pwm_target[2]; }
+		if ((alarm == true && (seconds_alarm_total - seconds_total) >= 0 && (seconds_alarm_total - seconds_total) < 1800) || play_alarm) {
+			if (pwm_current[0] < r_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*r_value; }
+			//if (pwm_current[0] >= r_value) { pwm_current[0] = r_value; }
+			if (pwm_current[1] < g_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*g_value; }
+			//if (pwm_current[1] >= g_value) { pwm_current[1] = g_value; }
+			if (pwm_current[2] < b_value) { pwm_current[0] = ((seconds_total - (seconds_alarm_total - 1800)) / 1800)*b_value; }
+			//if (pwm_current[2] >= b_value) { pwm_current[2] = b_value; }
 		}
 
 		if (alarm == false && menu_id != 4) {
@@ -1142,9 +1137,9 @@ void loop() {
 				//draw_Day(new_day, 31, 97);
 			break;
 		case 4: /// LED
-			pwm_current[0] = pwm_target[0];
-			pwm_current[1] = pwm_target[1];
-			pwm_current[2] = pwm_target[2];
+			pwm_current[0] = r_value;
+			pwm_current[1] = g_value;
+			pwm_current[2] = b_value;
 			break;
 		case 5: /// AUDIO
 			break;
